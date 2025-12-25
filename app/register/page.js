@@ -51,7 +51,7 @@ export default function RegisterPage() {
         profilePic: response.url,
       });
     } catch (err) {
-      setError('Failed to upload image');
+      setError('Failed to upload image: ' + (err.message || 'Please check your Cloudinary configuration'));
     } finally {
       setUploading(false);
     }

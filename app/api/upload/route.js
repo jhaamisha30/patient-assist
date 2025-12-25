@@ -10,15 +10,8 @@ cloudinary.config({
 
 export async function POST(request) {
   try {
-    const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    // Allow uploads during registration (no auth required)
+    // Authentication is optional for profile picture uploads
     const formData = await request.formData();
     const file = formData.get('file');
 
@@ -54,8 +47,17 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Upload error:', error);
+    
+    // Check if Cloudinary is configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return NextResponse.json(
+        { error: 'Cloudinary is not configured. Please check your environment variables.' },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Upload failed' },
+      { error: error.message || 'Upload failed. Please check your Cloudinary configuration.' },
       { status: 500 }
     );
   }
