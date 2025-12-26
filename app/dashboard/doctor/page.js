@@ -171,6 +171,11 @@ export default function DoctorDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center space-x-2 sm:space-x-4">
+              <img 
+                src="/patientAssistLogoSVGWithWhiteBG.svg" 
+                alt="Patient Assist Logo" 
+                className="h-12 sm:h-16 md:h-20 w-auto"
+              />
               <h1 className="text-xl sm:text-2xl font-bold text-green-600">Patient Assist</h1>
               <span className="text-sm sm:text-base text-gray-500 hidden sm:inline">Doctor Dashboard</span>
             </div>
