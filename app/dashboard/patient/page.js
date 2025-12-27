@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel } from '@/lib/api';
+import { toast } from 'react-toastify';
+import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel, updateProfilePic, uploadImage } from '@/lib/api';
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -11,6 +12,8 @@ export default function PatientDashboard() {
   const [doctor, setDoctor] = useState(null);
   const [diagnostics, setDiagnostics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -44,6 +47,25 @@ export default function PatientDashboard() {
     router.push('/login');
   };
 
+  const handleProfilePicUpdate = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const response = await uploadImage(file);
+      await updateProfilePic(response.url);
+      const updatedUser = await getCurrentUser();
+      setUser(updatedUser);
+      setShowProfileModal(false);
+      toast.success('Profile picture updated successfully!');
+    } catch (err) {
+      toast.error('Failed to update profile picture: ' + (err.message || 'Please check your Cloudinary configuration'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -72,7 +94,22 @@ export default function PatientDashboard() {
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
               {user?.profilePic && (
-                <img src={user.profilePic} alt="Profile" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" />
+                <img 
+                  src={user.profilePic} 
+                  alt="Profile" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover cursor-pointer"
+                  onClick={() => setShowProfileModal(true)}
+                />
+              )}
+              {!user?.profilePic && (
+                <div 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 flex items-center justify-center cursor-pointer"
+                  onClick={() => setShowProfileModal(true)}
+                >
+                  <span className="text-lg font-semibold text-green-600">
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               )}
               <div className="flex-1 sm:flex-none min-w-0">
                 <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{user?.name}</p>
@@ -184,6 +221,60 @@ export default function PatientDashboard() {
           </div>
         </div>
 
+        {/* Vitals Section */}
+        {patient && patient.vitals && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Vitals</h2>
+              {patient.vitalsLastUpdated && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Last updated: {new Date(patient.vitalsLastUpdated).toLocaleString()}
+                </p>
+              )}
+            </div>
+            <div className="px-4 sm:px-6 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {patient.vitals.bloodPressure && (
+                  <div>
+                    <p className="text-sm text-gray-500">Blood Pressure</p>
+                    <p className="text-lg font-medium text-gray-900">{patient.vitals.bloodPressure}</p>
+                  </div>
+                )}
+                {patient.vitals.heartRate && (
+                  <div>
+                    <p className="text-sm text-gray-500">Heart Rate (bpm)</p>
+                    <p className="text-lg font-medium text-gray-900">{patient.vitals.heartRate}</p>
+                  </div>
+                )}
+                {patient.vitals.temperature && (
+                  <div>
+                    <p className="text-sm text-gray-500">Temperature (°F)</p>
+                    <p className="text-lg font-medium text-gray-900">{patient.vitals.temperature}</p>
+                  </div>
+                )}
+                {patient.vitals.weight && (
+                  <div>
+                    <p className="text-sm text-gray-500">Weight (kg)</p>
+                    <p className="text-lg font-medium text-gray-900">{patient.vitals.weight}</p>
+                  </div>
+                )}
+                {patient.vitals.height && (
+                  <div>
+                    <p className="text-sm text-gray-500">Height (cm)</p>
+                    <p className="text-lg font-medium text-gray-900">{patient.vitals.height}</p>
+                  </div>
+                )}
+                {patient.vitals.bloodSugar && (
+                  <div>
+                    <p className="text-sm text-gray-500">Blood Sugar (mg/dL)</p>
+                    <p className="text-lg font-medium text-gray-900">{patient.vitals.bloodSugar}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Export Buttons */}
         <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
@@ -222,6 +313,16 @@ export default function PatientDashboard() {
                         <h3 className="text-lg font-semibold text-gray-900 mt-1">
                           {diagnostic.diagnosis}
                         </h3>
+                        {diagnostic.attendingDoctor && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Attending Doctor: <span className="font-medium">{diagnostic.attendingDoctor}</span>
+                          </p>
+                        )}
+                        {diagnostic.patientName && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Patient: <span className="font-medium">{diagnostic.patientName}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                     {diagnostic.symptoms && (
@@ -249,6 +350,44 @@ export default function PatientDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Profile Picture Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Update Profile Picture</h3>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePicUpdate}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  disabled={uploading}
+                />
+                {uploading && <p className="mt-2 text-sm text-gray-500">Uploading...</p>}
+              </div>
+              {user?.profilePic && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Current Picture:</p>
+                  <img src={user.profilePic} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

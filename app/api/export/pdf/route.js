@@ -142,24 +142,133 @@ export async function GET(request) {
       doc.text(`Address: ${patient.address}`, 14, infoY);
       infoY += 7;
     }
-    yPos = infoY + 5;
+    yPos = infoY + 10;
 
-    // Diagnostic Records Table
+    // Vitals Section
+    if (patient.vitals) {
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Vitals:', 14, yPos);
+      yPos += 7;
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      
+      let vitalsY = yPos;
+      if (patient.vitals.bloodPressure) {
+        doc.text(`Blood Pressure: ${patient.vitals.bloodPressure}`, 14, vitalsY);
+        vitalsY += 7;
+      }
+      if (patient.vitals.heartRate) {
+        doc.text(`Heart Rate: ${patient.vitals.heartRate} bpm`, 14, vitalsY);
+        vitalsY += 7;
+      }
+      if (patient.vitals.temperature) {
+        doc.text(`Temperature: ${patient.vitals.temperature} °F`, 14, vitalsY);
+        vitalsY += 7;
+      }
+      if (patient.vitals.weight) {
+        doc.text(`Weight: ${patient.vitals.weight} kg`, 14, vitalsY);
+        vitalsY += 7;
+      }
+      if (patient.vitals.height) {
+        doc.text(`Height: ${patient.vitals.height} cm`, 14, vitalsY);
+        vitalsY += 7;
+      }
+      if (patient.vitals.bloodSugar) {
+        doc.text(`Blood Sugar: ${patient.vitals.bloodSugar} mg/dL`, 14, vitalsY);
+        vitalsY += 7;
+      }
+      
+      // Last Updated timestamp
+      if (patient.vitalsLastUpdated) {
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Vitals Last Updated: ${new Date(patient.vitalsLastUpdated).toLocaleString()}`, 14, vitalsY + 3);
+        vitalsY += 10;
+      }
+      
+      yPos = vitalsY + 5;
+    }
+
+    // Diagnostic Records - Detailed Format (scalable for future fields)
     if (diagnostics.length > 0) {
-      const tableData = diagnostics.map(d => [
-        new Date(d.date).toLocaleDateString(),
-        d.diagnosis,
-        d.symptoms || 'N/A',
-        d.treatment || 'N/A',
-      ]);
+      doc.setFontSize(14);
+      doc.setTextColor(34, 139, 34);
+      doc.text('Diagnostic Records', 14, yPos);
+      yPos += 10;
 
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Date', 'Diagnosis', 'Symptoms', 'Treatment']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [34, 139, 34] },
-        styles: { fontSize: 9 },
+      diagnostics.forEach((diagnostic, index) => {
+        // Check if we need a new page
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        // Diagnostic header with background
+        doc.setFillColor(240, 240, 240);
+        doc.rect(14, yPos - 5, 182, 8, 'F');
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Diagnostic Record #${index + 1}`, 14, yPos);
+        yPos += 10;
+
+        // Diagnostic details in a structured format
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        
+        const details = [
+          { label: 'Date', value: new Date(diagnostic.date).toLocaleDateString() },
+          { label: 'Patient Name', value: diagnostic.patientName || patient.name },
+          { label: 'Attending Doctor', value: diagnostic.attendingDoctor || doctor?.name || 'N/A' },
+          { label: 'Diagnosis', value: diagnostic.diagnosis },
+        ];
+
+        // Display basic details
+        details.forEach(detail => {
+          doc.setFontSize(9);
+          doc.setTextColor(100, 100, 100);
+          doc.text(`${detail.label}:`, 14, yPos);
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          const textLines = doc.splitTextToSize(detail.value, 160);
+          doc.text(textLines, 60, yPos);
+          yPos += textLines.length * 5 + 3;
+        });
+
+        // Multi-line fields (Symptoms, Treatment, Notes)
+        const multiLineFields = [
+          { label: 'Symptoms', value: diagnostic.symptoms },
+          { label: 'Treatment', value: diagnostic.treatment },
+          { label: 'Notes', value: diagnostic.notes },
+        ];
+
+        multiLineFields.forEach(field => {
+          if (field.value && field.value.trim() !== '') {
+            // Check if we need a new page
+            if (yPos > 250) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`${field.label}:`, 14, yPos);
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const textLines = doc.splitTextToSize(field.value, 160);
+            doc.text(textLines, 14, yPos + 5);
+            yPos += textLines.length * 5 + 8;
+          }
+        });
+
+        // Separator line between diagnostics
+        yPos += 5;
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, yPos, 196, yPos);
+        yPos += 10;
       });
     } else {
       doc.text('No diagnostic records found.', 14, yPos);

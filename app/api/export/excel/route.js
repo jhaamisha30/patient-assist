@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export async function GET(request) {
   try {
@@ -95,50 +95,86 @@ export async function GET(request) {
     }
 
     // Create Excel workbook
-    const workbook = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
 
     // Patient Information Sheet
-    const patientData = [];
+    const patientSheet = workbook.addWorksheet('Patient Info');
     
     // Add doctor information at the top (for both patients and doctors)
     if (doctor) {
-      patientData.push(['Attending Doctor Information']);
-      patientData.push(['Doctor Name', `Dr. ${doctor.name}`]);
-      patientData.push(['Doctor Email', doctor.email]);
-      patientData.push(['']); // Empty row
+      patientSheet.addRow(['Attending Doctor Information']);
+      patientSheet.addRow(['Doctor Name', `Dr. ${doctor.name}`]);
+      patientSheet.addRow(['Doctor Email', doctor.email]);
+      patientSheet.addRow([]); // Empty row
     }
     
     // Patient Information
-    patientData.push(['Patient Information']);
-    patientData.push(['Name', patient.name]);
-    patientData.push(['Age', patient.age]);
-    patientData.push(['Email', patient.email]);
-    patientData.push(['Phone', patient.phone || 'N/A']);
-    patientData.push(['Address', patient.address || 'N/A']);
-    patientData.push(['Gender', patient.gender || 'N/A']);
-    patientData.push(['Medical History', patient.medicalHistory || 'N/A']);
-    patientData.push(['Allergies', patient.allergies || 'N/A']);
-    patientData.push(['Current Medications', patient.currentMedications || 'N/A']);
+    patientSheet.addRow(['Patient Information']);
+    patientSheet.addRow(['Name', patient.name]);
+    patientSheet.addRow(['Age', patient.age]);
+    patientSheet.addRow(['Email', patient.email]);
+    patientSheet.addRow(['Phone', patient.phone || 'N/A']);
+    patientSheet.addRow(['Address', patient.address || 'N/A']);
+    patientSheet.addRow(['Gender', patient.gender || 'N/A']);
+    patientSheet.addRow(['Medical History', patient.medicalHistory || 'N/A']);
+    patientSheet.addRow(['Allergies', patient.allergies || 'N/A']);
+    patientSheet.addRow(['Current Medications', patient.currentMedications || 'N/A']);
+    patientSheet.addRow([]); // Empty row
     
-    const patientSheet = XLSX.utils.aoa_to_sheet(patientData);
-    XLSX.utils.book_append_sheet(workbook, patientSheet, 'Patient Info');
+    // Vitals Section
+    if (patient.vitals) {
+      patientSheet.addRow(['Vitals']);
+      patientSheet.addRow(['Blood Pressure', patient.vitals.bloodPressure || 'N/A']);
+      patientSheet.addRow(['Heart Rate (bpm)', patient.vitals.heartRate || 'N/A']);
+      patientSheet.addRow(['Temperature (°F)', patient.vitals.temperature || 'N/A']);
+      patientSheet.addRow(['Weight (kg)', patient.vitals.weight || 'N/A']);
+      patientSheet.addRow(['Height (cm)', patient.vitals.height || 'N/A']);
+      patientSheet.addRow(['Blood Sugar (mg/dL)', patient.vitals.bloodSugar || 'N/A']);
+      
+      // Last Updated timestamp
+      if (patient.vitalsLastUpdated) {
+        patientSheet.addRow(['Vitals Last Updated', new Date(patient.vitalsLastUpdated).toLocaleString()]);
+      } else {
+        patientSheet.addRow(['Vitals Last Updated', 'N/A']);
+      }
+    }
 
     // Diagnostic Records Sheet
-    const diagnosticData = [
-      ['Date', 'Diagnosis', 'Symptoms', 'Treatment', 'Notes'],
-      ...diagnostics.map(d => [
+    const diagnosticSheet = workbook.addWorksheet('Diagnostics');
+    
+    // Add headers
+    diagnosticSheet.addRow(['Date', 'Patient Name', 'Attending Doctor', 'Diagnosis', 'Symptoms', 'Treatment', 'Notes']);
+    
+    // Style header row
+    const headerRow = diagnosticSheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF228B22' } // Green color
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    // Add diagnostic data
+    diagnostics.forEach(d => {
+      diagnosticSheet.addRow([
         new Date(d.date).toLocaleDateString(),
+        d.patientName || patient.name,
+        d.attendingDoctor || doctor?.name || 'N/A',
         d.diagnosis,
         d.symptoms || 'N/A',
         d.treatment || 'N/A',
         d.notes || 'N/A',
-      ]),
-    ];
-    const diagnosticSheet = XLSX.utils.aoa_to_sheet(diagnosticData);
-    XLSX.utils.book_append_sheet(workbook, diagnosticSheet, 'Diagnostics');
+      ]);
+    });
+    
+    // Auto-fit columns for better readability
+    diagnosticSheet.columns.forEach(column => {
+      column.width = 20;
+    });
 
     // Generate Excel buffer
-    const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const excelBuffer = await workbook.xlsx.writeBuffer();
 
     return new NextResponse(excelBuffer, {
       headers: {

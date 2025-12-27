@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { hashPassword, generateToken, setAuthCookie } from '@/lib/auth';
-import { getUsersCollection } from '@/lib/db';
+import { getUsersCollection, getPatientsCollection } from '@/lib/db';
+import { ObjectId } from 'mongodb';
 
 export async function POST(request) {
   try {
-    const { email, password, name, role, profilePic } = await request.json();
+    const { email, password, name, role, profilePic, doctorId, age, vitals } = await request.json();
 
     if (!email || !password || !name || !role) {
       return NextResponse.json(
@@ -13,10 +14,10 @@ export async function POST(request) {
       );
     }
 
-    // Only allow doctor registration - patients are created by doctors
-    if (role !== 'doctor') {
+    // Allow doctor and patient registration
+    if (role !== 'doctor' && role !== 'patient') {
       return NextResponse.json(
-        { error: 'Only doctors can register. Patients receive credentials from their doctor.' },
+        { error: 'Invalid role. Only doctors and patients can register.' },
         { status: 400 }
       );
     }
@@ -47,6 +48,63 @@ export async function POST(request) {
 
     const result = await usersCollection.insertOne(user);
     user._id = result.insertedId;
+
+    // If patient, create patient record
+    if (role === 'patient') {
+      const patientsCollection = await getPatientsCollection();
+      let currentDoctor = '';
+      
+      if (doctorId) {
+        const selectedDoctor = await usersCollection.findOne(
+          { _id: new ObjectId(doctorId), role: 'doctor' },
+          { projection: { password: 0 } }
+        );
+        if (selectedDoctor) {
+          currentDoctor = selectedDoctor.name;
+        }
+      }
+
+      // Prepare vitals object with provided values or defaults
+      const patientVitals = vitals ? {
+        bloodPressure: vitals.bloodPressure || '',
+        heartRate: vitals.heartRate || '',
+        temperature: vitals.temperature || '',
+        weight: vitals.weight || '',
+        height: vitals.height || '',
+        bloodSugar: vitals.bloodSugar || '',
+      } : {
+        bloodPressure: '',
+        heartRate: '',
+        temperature: '',
+        weight: '',
+        height: '',
+        bloodSugar: '',
+      };
+
+      // Set vitalsLastUpdated if any vital is provided
+      const hasVitals = Object.values(patientVitals).some(v => v && v.trim() !== '');
+      const vitalsLastUpdated = hasVitals ? new Date() : null;
+
+      const patient = {
+        userId: user._id.toString(),
+        doctorId: doctorId || null,
+        currentDoctor: currentDoctor,
+        name,
+        age: age ? parseInt(age) : 0,
+        email,
+        gender: '',
+        phone: '',
+        address: '',
+        medicalHistory: '',
+        allergies: '',
+        currentMedications: '',
+        vitals: patientVitals,
+        vitalsLastUpdated: vitalsLastUpdated,
+        createdAt: new Date(),
+      };
+
+      await patientsCollection.insertOne(patient);
+    }
 
     // Generate token
     const token = generateToken(user);

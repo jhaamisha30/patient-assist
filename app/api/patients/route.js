@@ -4,8 +4,8 @@ import { getPatientsCollection, getUsersCollection } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 
-// GET - Get all patients for a doctor
-export async function GET() {
+// GET - Get all patients for a doctor (including unassigned)
+export async function GET(request) {
   try {
     const currentUser = await getCurrentUser();
     
@@ -16,10 +16,19 @@ export async function GET() {
       );
     }
 
+    const { searchParams } = new URL(request.url);
+    const includeUnassigned = searchParams.get('unassigned') === 'true';
+
     const patientsCollection = await getPatientsCollection();
-    const patients = await patientsCollection
-      .find({ doctorId: currentUser.id })
-      .toArray();
+    
+    let query = { doctorId: currentUser.id };
+    
+    // If requesting unassigned patients, get those without a doctor
+    if (includeUnassigned) {
+      query = { $or: [{ doctorId: null }, { doctorId: '' }] };
+    }
+
+    const patients = await patientsCollection.find(query).toArray();
 
     return NextResponse.json(
       { patients },
@@ -63,6 +72,7 @@ export async function POST(request) {
       medicalHistory,
       allergies,
       currentMedications,
+      vitals,
     } = await request.json();
 
     if (!name || !age || !email || !password) {
@@ -120,6 +130,15 @@ export async function POST(request) {
       medicalHistory: medicalHistory || '',
       allergies: allergies || '',
       currentMedications: currentMedications || '',
+      vitals: vitals || {
+        bloodPressure: '',
+        heartRate: '',
+        temperature: '',
+        weight: '',
+        height: '',
+        bloodSugar: '',
+      },
+      vitalsLastUpdated: new Date(),
       createdAt: new Date(),
     };
 

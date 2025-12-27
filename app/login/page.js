@@ -16,7 +16,9 @@ export default function LoginPage() {
     async function checkAuth() {
       const user = await getCurrentUser();
       if (user) {
-        if (user.role === 'doctor') {
+        if (user.role === 'admin') {
+          router.push('/dashboard/admin');
+        } else if (user.role === 'doctor') {
           router.push('/dashboard/doctor');
         } else if (user.role === 'patient') {
           router.push('/dashboard/patient');
@@ -34,10 +36,14 @@ export default function LoginPage() {
     try {
       const response = await login(email, password);
       if (response.success) {
-        if (response.user.role === 'doctor') {
+        if (response.user.role === 'admin') {
+          router.push('/dashboard/admin');
+        } else if (response.user.role === 'doctor') {
           router.push('/dashboard/doctor');
         } else if (response.user.role === 'patient') {
           router.push('/dashboard/patient');
+        } else {
+          setError('Unknown user role');
         }
       }
     } catch (err) {
@@ -61,7 +67,7 @@ export default function LoginPage() {
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">Patient Assist</h1>
             <p className="text-gray-600">Sign in to your account</p>
-            <p className="text-sm text-gray-500 mt-2">Patients: Use credentials provided by your doctor</p>
+            <p className="text-sm text-gray-500 mt-2">Patients: Use credentials provided by your doctor or register yourself</p>
           </div>
 
           {error && (
@@ -112,13 +118,10 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center space-y-2">
             <p className="text-gray-600">
-              Are you a doctor?{' '}
+              Are you a doctor or a patient?{' '}
               <Link href="/register" className="text-green-600 hover:text-green-700 font-medium">
                 Register here
               </Link>
-            </p>
-            <p className="text-xs text-gray-500">
-              Patients receive login credentials from their doctor
             </p>
           </div>
         </div>

@@ -41,7 +41,9 @@ export default function Home() {
         // Small delay to show completed bar before redirect
         setTimeout(() => {
           if (user) {
-            if (user.role === 'doctor') {
+            if (user.role === 'admin') {
+              router.push('/dashboard/admin');
+            } else if (user.role === 'doctor') {
               router.push('/dashboard/doctor');
             } else if (user.role === 'patient') {
               router.push('/dashboard/patient');

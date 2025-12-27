@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { register, getCurrentUser, uploadImage } from '@/lib/api';
+import { register, getCurrentUser, uploadImage, getDoctors } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,7 +13,19 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     profilePic: '',
+    role: 'doctor',
+    doctorId: '',
+    age: '',
+    vitals: {
+      bloodPressure: '',
+      heartRate: '',
+      temperature: '',
+      weight: '',
+      height: '',
+      bloodSugar: '',
+    },
   });
+  const [doctors, setDoctors] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -22,7 +34,9 @@ export default function RegisterPage() {
     async function checkAuth() {
       const user = await getCurrentUser();
       if (user) {
-        if (user.role === 'doctor') {
+        if (user.role === 'admin') {
+          router.push('/dashboard/admin');
+        } else if (user.role === 'doctor') {
           router.push('/dashboard/doctor');
         } else if (user.role === 'patient') {
           router.push('/dashboard/patient');
@@ -30,13 +44,34 @@ export default function RegisterPage() {
       }
     }
     checkAuth();
+    loadDoctors();
   }, [router]);
 
+  const loadDoctors = async () => {
+    try {
+      const data = await getDoctors();
+      setDoctors(data.doctors || []);
+    } catch (error) {
+      console.error('Error loading doctors:', error);
+    }
+  };
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    if (e.target.name.startsWith('vitals.')) {
+      const vitalField = e.target.name.split('.')[1];
+      setFormData({
+        ...formData,
+        vitals: {
+          ...formData.vitals,
+          [vitalField]: e.target.value,
+        },
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -78,12 +113,19 @@ export default function RegisterPage() {
         formData.email,
         formData.password,
         formData.name,
-        'doctor',
-        formData.profilePic
+        formData.role,
+        formData.profilePic,
+        formData.role === 'patient' ? formData.doctorId : null,
+        formData.role === 'patient' ? formData.age : null,
+        formData.role === 'patient' ? formData.vitals : null
       );
       
       if (response.success) {
-        router.push('/dashboard/doctor');
+        if (formData.role === 'doctor') {
+          router.push('/dashboard/doctor');
+        } else if (formData.role === 'patient') {
+          router.push('/dashboard/patient');
+        }
       }
     } catch (err) {
       setError(err.message || 'Registration failed');
@@ -105,8 +147,8 @@ export default function RegisterPage() {
               />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">Patient Assist</h1>
-            <p className="text-gray-600">Doctor Registration</p>
-            <p className="text-sm text-gray-500 mt-2">Patients: Please use credentials provided by your doctor</p>
+            <p className="text-gray-600">Registration</p>
+            <p className="text-sm text-gray-500 mt-2">Create an account as a doctor or patient</p>
           </div>
 
           {error && (
@@ -116,6 +158,156 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                I am a
+              </label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+              >
+                <option value="doctor">Doctor</option>
+                <option value="patient">Patient</option>
+              </select>
+            </div>
+
+            {formData.role === 'patient' && (
+              <>
+                <div>
+                  <label htmlFor="doctorId" className="block text-sm font-medium text-gray-700 mb-2">
+                    Attending Doctor (Optional)
+                  </label>
+                  <select
+                    id="doctorId"
+                    name="doctorId"
+                    value={formData.doctorId}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  >
+                    <option value="">Select a doctor (optional)</option>
+                    {doctors.map((doctor) => (
+                      <option key={doctor.id} value={doctor.id}>
+                        {doctor.name} - {doctor.email}
+                      </option>
+                    ))}
+                  </select>
+                  {doctors.length === 0 && (
+                    <p className="mt-1 text-xs text-gray-500">No doctors available. You can still create an account.</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
+                    Age (Optional)
+                  </label>
+                  <input
+                    id="age"
+                    name="age"
+                    type="number"
+                    min="0"
+                    value={formData.age}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    placeholder="Enter your age"
+                  />
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Vitals (Optional)</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="vitals.bloodPressure" className="block text-xs font-medium text-gray-700 mb-1">
+                        Blood Pressure
+                      </label>
+                      <input
+                        id="vitals.bloodPressure"
+                        name="vitals.bloodPressure"
+                        type="text"
+                        value={formData.vitals.bloodPressure}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
+                        placeholder="e.g., 120/80"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="vitals.heartRate" className="block text-xs font-medium text-gray-700 mb-1">
+                        Heart Rate (bpm)
+                      </label>
+                      <input
+                        id="vitals.heartRate"
+                        name="vitals.heartRate"
+                        type="text"
+                        value={formData.vitals.heartRate}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
+                        placeholder="e.g., 72"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="vitals.temperature" className="block text-xs font-medium text-gray-700 mb-1">
+                        Temperature (°F)
+                      </label>
+                      <input
+                        id="vitals.temperature"
+                        name="vitals.temperature"
+                        type="text"
+                        value={formData.vitals.temperature}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
+                        placeholder="e.g., 98.6"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="vitals.weight" className="block text-xs font-medium text-gray-700 mb-1">
+                        Weight (kg)
+                      </label>
+                      <input
+                        id="vitals.weight"
+                        name="vitals.weight"
+                        type="text"
+                        value={formData.vitals.weight}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
+                        placeholder="e.g., 70"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="vitals.height" className="block text-xs font-medium text-gray-700 mb-1">
+                        Height (cm)
+                      </label>
+                      <input
+                        id="vitals.height"
+                        name="vitals.height"
+                        type="text"
+                        value={formData.vitals.height}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
+                        placeholder="e.g., 170"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="vitals.bloodSugar" className="block text-xs font-medium text-gray-700 mb-1">
+                        Blood Sugar (mg/dL)
+                      </label>
+                      <input
+                        id="vitals.bloodSugar"
+                        name="vitals.bloodSugar"
+                        type="text"
+                        value={formData.vitals.bloodSugar}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
+                        placeholder="e.g., 100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
