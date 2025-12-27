@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { getCurrentUser, getPatients, addPatient, addDiagnostic, getDiagnostics, deletePatient, logout, exportToPDF, exportToExcel, getUnassignedPatients, assignPatient, updateProfilePic, uploadImage, updatePatient } from '@/lib/api';
 
@@ -325,6 +326,12 @@ export default function DoctorDashboard() {
                 <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{user?.name}</p>
                 <p className="text-xs sm:text-sm text-gray-500 truncate">{user?.email}</p>
               </div>
+              <Link
+                href="/dashboard/team"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm sm:text-base whitespace-nowrap"
+              >
+                Our Team
+              </Link>
               <button
                 onClick={handleLogout}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors text-sm sm:text-base whitespace-nowrap"
