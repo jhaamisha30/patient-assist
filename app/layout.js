@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <ToastContainer
           position="top-right"

@@ -26,28 +26,43 @@ async function createAdmin() {
 
     // Check if admin already exists
     const existingAdmin = await usersCollection.findOne({ email: ADMIN_EMAIL });
-    if (existingAdmin) {
-      console.log('Admin user already exists');
-      return;
-    }
-
+    
     // Hash password
     const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
 
-    // Create admin user
-    const admin = {
-      email: ADMIN_EMAIL,
-      password: hashedPassword,
-      name: 'Admin',
-      role: 'admin',
-      profilePic: '',
-      createdAt: new Date(),
-    };
+    if (existingAdmin) {
+      // Update existing admin credentials
+      await usersCollection.updateOne(
+        { email: ADMIN_EMAIL },
+        {
+          $set: {
+            password: hashedPassword,
+            role: 'admin',
+            verified: true, // Admin users are automatically verified
+            // Preserve other fields like name, profilePic, createdAt
+          }
+        }
+      );
+      console.log('Admin credentials updated successfully!');
+      console.log(`Email: ${ADMIN_EMAIL}`);
+      console.log(`Password: ${ADMIN_PASSWORD}`);
+    } else {
+      // Create new admin user
+      const admin = {
+        email: ADMIN_EMAIL,
+        password: hashedPassword,
+        name: 'Admin',
+        role: 'admin',
+        profilePic: '',
+        verified: true, // Admin users are automatically verified
+        createdAt: new Date(),
+      };
 
-    await usersCollection.insertOne(admin);
-    console.log('Admin user created successfully!');
-    console.log(`Email: ${ADMIN_EMAIL}`);
-    console.log(`Password: ${ADMIN_PASSWORD}`);
+      await usersCollection.insertOne(admin);
+      console.log('Admin user created successfully!');
+      console.log(`Email: ${ADMIN_EMAIL}`);
+      console.log(`Password: ${ADMIN_PASSWORD}`);
+    }
   } catch (error) {
     console.error('Error creating admin:', error);
   } finally {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, verifyPassword } from '@/lib/auth';
 import { getPatientsCollection, getUsersCollection, getDiagnosticsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
@@ -15,9 +15,35 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    // Get password from request body
+    const { password } = await request.json();
+    if (!password) {
+      return NextResponse.json(
+        { error: 'Password is required to delete a patient' },
+        { status: 400 }
+      );
+    }
+
+    // Verify admin password
+    const usersCollection = await getUsersCollection();
+    const admin = await usersCollection.findOne({ _id: new ObjectId(currentUser.id) });
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Admin user not found' },
+        { status: 404 }
+      );
+    }
+
+    const isPasswordValid = await verifyPassword(password, admin.password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: 'Invalid password' },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const patientsCollection = await getPatientsCollection();
-    const usersCollection = await getUsersCollection();
     const diagnosticsCollection = await getDiagnosticsCollection();
 
     // Find the patient

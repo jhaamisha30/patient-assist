@@ -161,7 +161,14 @@ export default function DoctorDashboard() {
             bloodSugar: '',
           },
         });
-        toast.success('Patient added successfully!');
+        // Show appropriate message based on email status
+        if (response.emailSent) {
+          toast.success('Patient added successfully! Verification email has been sent.');
+        } else if (response.emailError) {
+          toast.warning(response.message || `Patient added successfully, but ${response.emailError}.`);
+        } else {
+          toast.success(response.message || 'Patient added successfully!');
+        }
       }
     } catch (error) {
       toast.error('Error adding patient: ' + error.message);

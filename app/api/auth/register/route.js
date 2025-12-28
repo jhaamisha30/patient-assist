@@ -24,13 +24,43 @@ export async function POST(request) {
       );
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Enhanced email validation - stricter regex
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: 'Please enter a valid email address' },
         { status: 400 }
       );
+    }
+
+    // Additional validation: check for valid domain structure
+    const emailParts = email.split('@');
+    if (emailParts.length !== 2) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
+        { status: 400 }
+      );
+    }
+    const domain = emailParts[1];
+    // Domain should have at least one dot and valid TLD (2+ characters)
+    const domainParts = domain.split('.');
+    if (domainParts.length < 2 || domainParts[domainParts.length - 1].length < 2) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address with a valid domain' },
+        { status: 400 }
+      );
+    }
+    
+    // Stricter domain validation: reject single-letter domain parts (except for known single-letter TLDs like .x, .z)
+    // This catches cases like "something@s.com" which are likely invalid
+    // Check all parts except the TLD (last part)
+    for (let i = 0; i < domainParts.length - 1; i++) {
+      if (domainParts[i].length < 2) {
+        return NextResponse.json(
+          { error: 'Please enter a valid email address. Single-letter domains are not accepted.' },
+          { status: 400 }
+        );
+      }
     }
 
     const usersCollection = await getUsersCollection();
@@ -44,7 +74,7 @@ export async function POST(request) {
       );
     }
 
-    // Generate verification token
+    // Generate verification token FIRST (before creating user)
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationTokenExpiry = new Date();
     verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24); // 24 hours expiry
@@ -52,7 +82,37 @@ export async function POST(request) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // IMPORTANT: Try to send verification email FIRST before creating user
+    // This way, if email sending fails with invalid email error, we fail before creating the user
+    let emailSent = false;
+    let emailError = null;
+    try {
+      await sendVerificationEmail(email, name, verificationToken);
+      emailSent = true;
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr);
+      emailError = emailErr.message || 'Failed to send verification email';
+      const errorMsg = emailError.toLowerCase();
+      
+      // Check if this is an invalid email error (not a temporary service error)
+      // If it's an invalid email, fail registration immediately without creating user
+      if (
+        errorMsg.includes('mail does not exist') ||
+        errorMsg.includes('does not exist or is invalid') ||
+        errorMsg.includes('invalid email address format') ||
+        errorMsg.includes('invalid email address') ||
+        (errorMsg.includes('error sending verification mail') && !errorMsg.includes('service'))
+      ) {
+        return NextResponse.json(
+          { error: emailError || 'Error sending verification mail - mail does not exist. Please check the email address and try again.' },
+          { status: 400 }
+        );
+      }
+      // For other errors (service configuration, temporary issues), we'll still create the user
+      // but mark email as not sent so user can request resend later
+    }
+
+    // Create user only after email validation passes (or for temporary errors)
     const user = {
       email,
       password: hashedPassword,
@@ -67,15 +127,6 @@ export async function POST(request) {
 
     const result = await usersCollection.insertOne(user);
     user._id = result.insertedId;
-
-    // Send verification email
-    try {
-      await sendVerificationEmail(email, name, verificationToken);
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
-      // Don't fail registration if email fails, but log it
-      // User can request resend later
-    }
 
     // If patient, create patient record
     if (role === 'patient') {
@@ -137,10 +188,21 @@ export async function POST(request) {
     // Do NOT log the user in - they must verify their email first
     // Token generation and cookie setting removed
 
-    return NextResponse.json({
-      success: true,
-      message: 'Registration successful! Please check your email to verify your account before logging in.',
-    });
+    // Return response based on email status
+    if (emailSent) {
+      return NextResponse.json({
+        success: true,
+        message: 'Registration successful! Please check your email to verify your account before logging in.',
+      });
+    } else {
+      // Email wasn't sent due to temporary service error (not invalid email, as that would have failed above)
+      return NextResponse.json({
+        success: true,
+        emailSent: false,
+        emailError: emailError || undefined,
+        message: `Registration successful, but ${emailError || 'verification email could not be sent'}. You can request a verification email resend after logging in.`,
+      });
+    }
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(

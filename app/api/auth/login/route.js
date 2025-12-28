@@ -31,8 +31,8 @@ export async function POST(request) {
       );
     }
 
-    // Check if email is verified
-    if (!user.verified) {
+    // Check if email is verified (skip verification for admin users)
+    if (user.role !== 'admin' && !user.verified) {
       return NextResponse.json(
         { 
           error: 'Please verify your email address before logging in. Check your inbox for the verification email.',

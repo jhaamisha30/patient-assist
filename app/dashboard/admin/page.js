@@ -19,6 +19,22 @@ export default function AdminDashboard() {
   const [expandedDoctors, setExpandedDoctors] = useState(new Set());
   const [expandedPatients, setExpandedPatients] = useState(new Set());
   const [resendingVerification, setResendingVerification] = useState(false);
+  
+  // Filter states
+  const [doctorFilterUnauthenticated, setDoctorFilterUnauthenticated] = useState(false);
+  const [patientFilterUnauthenticated, setPatientFilterUnauthenticated] = useState(false);
+  const [patientFilterUnassigned, setPatientFilterUnassigned] = useState(false);
+  
+  // Selection states
+  const [selectedDoctors, setSelectedDoctors] = useState(new Set());
+  const [selectedPatients, setSelectedPatients] = useState(new Set());
+  
+  // Password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordModalCallback, setPasswordModalCallback] = useState(null);
+  const [passwordModalTitle, setPasswordModalTitle] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -50,30 +66,216 @@ export default function AdminDashboard() {
     router.push('/login');
   };
 
-  const handleDeleteDoctor = async (doctorId) => {
-    if (!window.confirm('Are you sure you want to delete this doctor? All their patients will be unassigned.')) {
+  // Open password modal for deletion
+  const openPasswordModal = (title, callback) => {
+    setPasswordModalTitle(title);
+    setPasswordModalCallback(() => callback);
+    setShowPasswordModal(true);
+    setPasswordInput('');
+  };
+
+  // Handle password confirmation and deletion
+  const handlePasswordConfirm = async () => {
+    if (!passwordInput) {
+      toast.error('Please enter your password');
       return;
     }
+    
+    setDeleting(true);
     try {
-      await deleteDoctor(doctorId);
-      await loadAllData();
-      toast.success('Doctor deleted successfully!');
+      if (passwordModalCallback) {
+        await passwordModalCallback(passwordInput);
+        // Only show success and close modal if callback succeeds
+        setShowPasswordModal(false);
+        setPasswordInput('');
+        setPasswordModalCallback(null);
+      }
     } catch (error) {
-      toast.error('Error deleting doctor: ' + error.message);
+      // Don't close modal on error, let user try again
+      // Suppress console error for expected authentication errors
+      const errorMessage = error.message || 'An error occurred';
+      if (errorMessage.includes('Invalid password') || errorMessage.includes('Password is required')) {
+        // Expected error - only show toast, don't log to console
+        toast.error(errorMessage);
+      } else {
+        // Unexpected error - show toast and log to console
+        console.error('Delete error:', error);
+        toast.error('Error: ' + errorMessage);
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const handleDeletePatient = async (patientId) => {
-    if (!window.confirm('Are you sure you want to delete this patient? This will also delete all their diagnostic records.')) {
+  const handleDeleteDoctor = async (doctorId, password) => {
+    await deleteDoctor(doctorId, password);
+    await loadAllData();
+    setSelectedDoctors(new Set());
+    toast.success('Doctor deleted successfully!');
+  };
+
+  const handleDeletePatient = async (patientId, password) => {
+    await deletePatientAdmin(patientId, password);
+    await loadAllData();
+    setSelectedPatients(new Set());
+    toast.success('Patient deleted successfully!');
+  };
+
+  const handleDeleteDoctorWithPassword = (doctorId) => {
+    openPasswordModal(
+      'Delete Doctor',
+      async (password) => {
+        await handleDeleteDoctor(doctorId, password);
+      }
+    );
+  };
+
+  const handleDeletePatientWithPassword = (patientId) => {
+    openPasswordModal(
+      'Delete Patient',
+      async (password) => {
+        await handleDeletePatient(patientId, password);
+      }
+    );
+  };
+
+  // Bulk delete handlers
+  const handleBulkDeleteDoctors = () => {
+    if (selectedDoctors.size === 0) {
+      toast.error('Please select doctors to delete');
       return;
     }
-    try {
-      await deletePatientAdmin(patientId);
-      await loadAllData();
-      toast.success('Patient deleted successfully!');
-    } catch (error) {
-      toast.error('Error deleting patient: ' + error.message);
+    const count = selectedDoctors.size;
+    const doctorIds = Array.from(selectedDoctors);
+    openPasswordModal(
+      `Delete ${count} Doctor(s)`,
+      async (password) => {
+        let successCount = 0;
+        let errorCount = 0;
+        
+        const deletePromises = doctorIds.map(id => 
+          deleteDoctor(id, password)
+            .then(() => {
+              successCount++;
+              return true;
+            })
+            .catch(err => {
+              console.error(`Error deleting doctor ${id}:`, err);
+              errorCount++;
+              return false;
+            })
+        );
+        
+        await Promise.all(deletePromises);
+        await loadAllData();
+        setSelectedDoctors(new Set());
+        
+        if (errorCount > 0) {
+          toast.warning(`${successCount} doctor(s) deleted, ${errorCount} failed. Please check your password.`);
+        } else {
+          toast.success(`${successCount} doctor(s) deleted successfully!`);
+        }
+      }
+    );
+  };
+
+  const handleBulkDeletePatients = () => {
+    if (selectedPatients.size === 0) {
+      toast.error('Please select patients to delete');
+      return;
     }
+    const count = selectedPatients.size;
+    const patientIds = Array.from(selectedPatients);
+    openPasswordModal(
+      `Delete ${count} Patient(s)`,
+      async (password) => {
+        let successCount = 0;
+        let errorCount = 0;
+        
+        const deletePromises = patientIds.map(id => 
+          deletePatientAdmin(id, password)
+            .then(() => {
+              successCount++;
+              return true;
+            })
+            .catch(err => {
+              console.error(`Error deleting patient ${id}:`, err);
+              errorCount++;
+              return false;
+            })
+        );
+        
+        await Promise.all(deletePromises);
+        await loadAllData();
+        setSelectedPatients(new Set());
+        
+        if (errorCount > 0) {
+          toast.warning(`${successCount} patient(s) deleted, ${errorCount} failed. Please check your password.`);
+        } else {
+          toast.success(`${successCount} patient(s) deleted successfully!`);
+        }
+      }
+    );
+  };
+
+  // Toggle selection
+  const toggleDoctorSelection = (doctorId) => {
+    const newSelected = new Set(selectedDoctors);
+    if (newSelected.has(doctorId)) {
+      newSelected.delete(doctorId);
+    } else {
+      newSelected.add(doctorId);
+    }
+    setSelectedDoctors(newSelected);
+  };
+
+  const togglePatientSelection = (patientId) => {
+    const newSelected = new Set(selectedPatients);
+    if (newSelected.has(patientId)) {
+      newSelected.delete(patientId);
+    } else {
+      newSelected.add(patientId);
+    }
+    setSelectedPatients(newSelected);
+  };
+
+  // Select all / deselect all
+  const toggleSelectAllDoctors = () => {
+    const filteredDoctors = getFilteredDoctors();
+    if (selectedDoctors.size === filteredDoctors.length) {
+      setSelectedDoctors(new Set());
+    } else {
+      setSelectedDoctors(new Set(filteredDoctors.map(d => d.id)));
+    }
+  };
+
+  const toggleSelectAllPatients = () => {
+    const filteredPatients = getFilteredPatients();
+    if (selectedPatients.size === filteredPatients.length) {
+      setSelectedPatients(new Set());
+    } else {
+      setSelectedPatients(new Set(filteredPatients.map(p => p.id)));
+    }
+  };
+
+  // Filter functions
+  const getFilteredDoctors = () => {
+    let filtered = doctors;
+    if (doctorFilterUnauthenticated) {
+      filtered = filtered.filter(d => !d.verified);
+    }
+    return filtered;
+  };
+
+  const getFilteredPatients = () => {
+    let filtered = patients;
+    if (patientFilterUnauthenticated) {
+      filtered = filtered.filter(p => !p.verified);
+    }
+    if (patientFilterUnassigned) {
+      filtered = filtered.filter(p => !p.doctorId || p.doctorId === null || p.doctorId === '');
+    }
+    return filtered;
   };
 
   const handleDeleteDiagnostic = async (diagnosticId) => {
@@ -257,96 +459,214 @@ export default function AdminDashboard() {
         </div>
 
         {/* Doctors Tab */}
-        {activeTab === 'doctors' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">All Doctors</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {doctors.length === 0 ? (
+        {activeTab === 'doctors' && (() => {
+          const filteredDoctors = getFilteredDoctors();
+          return (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">All Doctors ({filteredDoctors.length})</h2>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {/* Filter */}
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={doctorFilterUnauthenticated}
+                        onChange={(e) => {
+                          setDoctorFilterUnauthenticated(e.target.checked);
+                          setSelectedDoctors(new Set()); // Clear selection when filter changes
+                        }}
+                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <span className="text-sm text-gray-700">Unauthenticated</span>
+                    </label>
+                    {/* Bulk Delete Button */}
+                    {selectedDoctors.size > 0 && (
+                      <button
+                        onClick={handleBulkDeleteDoctors}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        Delete Selected ({selectedDoctors.size})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
-                        No doctors found.
-                      </td>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          checked={filteredDoctors.length > 0 && selectedDoctors.size === filteredDoctors.length}
+                          onChange={toggleSelectAllDoctors}
+                          className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ) : (
-                    doctors.map((doctor) => (
-                      <tr key={doctor.id} className="hover:bg-gray-50">
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.name}</td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleDeleteDoctor(doctor.id)}
-                            className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
-                          >
-                            Delete
-                          </button>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredDoctors.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                          No doctors found.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredDoctors.map((doctor) => (
+                        <tr key={doctor.id} className="hover:bg-gray-50">
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={selectedDoctors.has(doctor.id)}
+                              onChange={() => toggleDoctorSelection(doctor.id)}
+                              className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            />
+                          </td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.name}</td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                            {doctor.verified ? (
+                              <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">Verified</span>
+                            ) : (
+                              <span className="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">Unverified</span>
+                            )}
+                          </td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleDeleteDoctorWithPassword(doctor.id)}
+                              className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Patients Tab */}
-        {activeTab === 'patients' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">All Patients</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {patients.length === 0 ? (
+        {activeTab === 'patients' && (() => {
+          const filteredPatients = getFilteredPatients();
+          return (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">All Patients ({filteredPatients.length})</h2>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {/* Filters */}
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={patientFilterUnauthenticated}
+                        onChange={(e) => {
+                          setPatientFilterUnauthenticated(e.target.checked);
+                          setSelectedPatients(new Set()); // Clear selection when filter changes
+                        }}
+                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <span className="text-sm text-gray-700">Unauthenticated</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={patientFilterUnassigned}
+                        onChange={(e) => {
+                          setPatientFilterUnassigned(e.target.checked);
+                          setSelectedPatients(new Set()); // Clear selection when filter changes
+                        }}
+                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <span className="text-sm text-gray-700">Unassigned</span>
+                    </label>
+                    {/* Bulk Delete Button */}
+                    {selectedPatients.size > 0 && (
+                      <button
+                        onClick={handleBulkDeletePatients}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        Delete Selected ({selectedPatients.size})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                        No patients found.
-                      </td>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          checked={filteredPatients.length > 0 && selectedPatients.size === filteredPatients.length}
+                          onChange={toggleSelectAllPatients}
+                          className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ) : (
-                    patients.map((patient) => (
-                      <tr key={patient.id} className="hover:bg-gray-50">
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}</td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.email}</td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.currentDoctor || 'Unassigned'}</td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleDeletePatient(patient.id)}
-                            className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
-                          >
-                            Delete
-                          </button>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredPatients.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                          No patients found.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredPatients.map((patient) => (
+                        <tr key={patient.id} className="hover:bg-gray-50">
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={selectedPatients.has(patient.id)}
+                              onChange={() => togglePatientSelection(patient.id)}
+                              className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            />
+                          </td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}</td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.email}</td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.currentDoctor || 'Unassigned'}</td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                            {patient.verified ? (
+                              <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">Verified</span>
+                            ) : (
+                              <span className="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">Unverified</span>
+                            )}
+                          </td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleDeletePatientWithPassword(patient.id)}
+                              className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Tree View Tab */}
         {activeTab === 'tree' && (
@@ -694,6 +1014,69 @@ export default function AdminDashboard() {
                   <img src={user.profilePic} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Confirmation Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{passwordModalTitle}</h3>
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordInput('');
+                  setPasswordModalCallback(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+                disabled={deleting}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Enter your password to confirm
+                </label>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !deleting && passwordInput) {
+                      handlePasswordConfirm();
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  placeholder="Password"
+                  disabled={deleting}
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setPasswordInput('');
+                    setPasswordModalCallback(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordConfirm}
+                  disabled={deleting || !passwordInput}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Confirm Delete'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

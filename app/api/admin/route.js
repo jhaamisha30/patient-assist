@@ -19,13 +19,32 @@ export async function GET() {
     const patientsCollection = await getPatientsCollection();
     const diagnosticsCollection = await getDiagnosticsCollection();
 
-    // Get all doctors
+    // Get all doctors (include verified status)
     const doctors = await usersCollection
       .find({ role: 'doctor' }, { projection: { password: 0 } })
       .toArray();
 
-    // Get all patients
+    // Get all patients and populate user info for verified status
     const patients = await patientsCollection.find({}).toArray();
+    
+    // Get user info for patients to include verified status
+    const patientUserIds = patients
+      .map(p => p.userId ? new ObjectId(p.userId) : null)
+      .filter(Boolean);
+    
+    let patientUserMap = new Map();
+    if (patientUserIds.length > 0) {
+      const patientUsers = await usersCollection
+        .find({ _id: { $in: patientUserIds } }, { projection: { verified: 1, _id: 1 } })
+        .toArray();
+      patientUserMap = new Map(patientUsers.map(u => [u._id.toString(), u.verified || false]));
+    }
+    
+    // Add verified status to patients
+    const patientsWithVerified = patients.map(p => ({
+      ...p,
+      verified: p.userId ? (patientUserMap.get(p.userId) || false) : false,
+    }));
 
     // Get all diagnostics
     const diagnostics = await diagnosticsCollection.find({}).toArray();
@@ -64,7 +83,7 @@ export async function GET() {
         id: d._id.toString(),
         _id: undefined,
       })),
-      patients: patients.map(p => ({
+      patients: patientsWithVerified.map(p => ({
         ...p,
         id: p._id.toString(),
         _id: undefined,

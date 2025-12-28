@@ -122,15 +122,23 @@ export default function RegisterPage() {
       );
       
       if (response.success) {
-        // Show success message about email verification
-        toast.success(response.message || 'Registration successful! Please check your email to verify your account.');
+        // Show appropriate message based on email status
+        if (response.emailSent) {
+          toast.success(response.message || 'Registration successful! Please check your email to verify your account.');
+        } else if (response.emailError) {
+          toast.warning(response.message || `Registration successful, but ${response.emailError}. Please check if the email address is valid.`);
+        } else {
+          toast.success(response.message || 'Registration successful!');
+        }
         // Redirect to login page instead of dashboard
         setTimeout(() => {
           router.push('/login');
         }, 2000);
       }
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      const errorMessage = err.message || 'Registration failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

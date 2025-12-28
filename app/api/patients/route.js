@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getPatientsCollection, getUsersCollection } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
+import { sendVerificationEmail } from '@/lib/email';
 import { ObjectId } from 'mongodb';
+import crypto from 'crypto';
 
 // GET - Get all patients for a doctor (including unassigned)
 export async function GET(request) {
@@ -100,6 +102,11 @@ export async function POST(request) {
       { projection: { password: 0 } }
     );
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpiry = new Date();
+    verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24); // 24 hours expiry
+
     // Hash password
     const hashedPassword = await hashPassword(password);
 
@@ -110,6 +117,9 @@ export async function POST(request) {
       name,
       role: 'patient',
       profilePic: '',
+      verified: false,
+      verificationToken,
+      verificationTokenExpiry,
       createdAt: new Date(),
     };
 
@@ -144,15 +154,39 @@ export async function POST(request) {
 
     const patientResult = await patientsCollection.insertOne(patient);
 
+    // Send verification email to patient with doctor's name
+    let emailError = null;
+    try {
+      await sendVerificationEmail(email, name, verificationToken, doctor ? doctor.name : null);
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr);
+      emailError = emailErr.message || 'Failed to send verification email';
+      // Don't fail patient creation if email fails, but include error in response
+    }
+
     return NextResponse.json({
       success: true,
       patient: {
         id: patientResult.insertedId.toString(),
         ...patient,
       },
+      emailSent: !emailError,
+      emailError: emailError || undefined,
+      message: emailError 
+        ? `Patient created successfully, but ${emailError.toLowerCase()}. Please ensure the email address is valid.`
+        : 'Patient created successfully. Verification email has been sent.',
     });
   } catch (error) {
     console.error('Add patient error:', error);
+    
+    // Check if it's an email-related error
+    if (error.message && error.message.includes('email')) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
