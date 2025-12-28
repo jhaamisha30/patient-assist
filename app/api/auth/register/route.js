@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { hashPassword, generateToken, setAuthCookie } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
 import { getUsersCollection, getPatientsCollection } from '@/lib/db';
+import { sendVerificationEmail } from '@/lib/email';
 import { ObjectId } from 'mongodb';
+import crypto from 'crypto';
 
 export async function POST(request) {
   try {
@@ -22,6 +24,15 @@ export async function POST(request) {
       );
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
+        { status: 400 }
+      );
+    }
+
     const usersCollection = await getUsersCollection();
     
     // Check if user already exists
@@ -33,6 +44,11 @@ export async function POST(request) {
       );
     }
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpiry = new Date();
+    verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24); // 24 hours expiry
+
     // Hash password
     const hashedPassword = await hashPassword(password);
 
@@ -43,11 +59,23 @@ export async function POST(request) {
       name,
       role,
       profilePic: profilePic || '',
+      verified: false,
+      verificationToken,
+      verificationTokenExpiry,
       createdAt: new Date(),
     };
 
     const result = await usersCollection.insertOne(user);
     user._id = result.insertedId;
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, name, verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Don't fail registration if email fails, but log it
+      // User can request resend later
+    }
 
     // If patient, create patient record
     if (role === 'patient') {
@@ -106,21 +134,12 @@ export async function POST(request) {
       await patientsCollection.insertOne(patient);
     }
 
-    // Generate token
-    const token = generateToken(user);
-
-    // Set cookie
-    await setAuthCookie(token);
+    // Do NOT log the user in - they must verify their email first
+    // Token generation and cookie setting removed
 
     return NextResponse.json({
       success: true,
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        profilePic: user.profilePic,
-      },
+      message: 'Registration successful! Please check your email to verify your account before logging in.',
     });
   } catch (error) {
     console.error('Registration error:', error);

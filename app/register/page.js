@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { register, getCurrentUser, uploadImage, getDoctors } from '@/lib/api';
+import { toast } from 'react-toastify';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -121,11 +122,12 @@ export default function RegisterPage() {
       );
       
       if (response.success) {
-        if (formData.role === 'doctor') {
-          router.push('/dashboard/doctor');
-        } else if (formData.role === 'patient') {
-          router.push('/dashboard/patient');
-        }
+        // Show success message about email verification
+        toast.success(response.message || 'Registration successful! Please check your email to verify your account.');
+        // Redirect to login page instead of dashboard
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
       }
     } catch (err) {
       setError(err.message || 'Registration failed');

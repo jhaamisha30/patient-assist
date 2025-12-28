@@ -31,6 +31,17 @@ export async function POST(request) {
       );
     }
 
+    // Check if email is verified
+    if (!user.verified) {
+      return NextResponse.json(
+        { 
+          error: 'Please verify your email address before logging in. Check your inbox for the verification email.',
+          requiresVerification: true,
+        },
+        { status: 403 }
+      );
+    }
+
     // Generate token
     const token = generateToken(user);
 
@@ -45,6 +56,7 @@ export async function POST(request) {
         name: user.name,
         role: user.role,
         profilePic: user.profilePic || '',
+        verified: user.verified,
       },
     });
   } catch (error) {

@@ -26,7 +26,7 @@ export default function Home() {
 
     async function checkAuth() {
       try {
-        const user = await getCurrentUser();
+      const user = await getCurrentUser();
         
         // Ensure minimum display time
         const elapsed = Date.now() - startTime;
@@ -40,17 +40,17 @@ export default function Home() {
         
         // Small delay to show completed bar before redirect
         setTimeout(() => {
-          if (user) {
+      if (user) {
             if (user.role === 'admin') {
               router.push('/dashboard/admin');
             } else if (user.role === 'doctor') {
-              router.push('/dashboard/doctor');
-            } else if (user.role === 'patient') {
-              router.push('/dashboard/patient');
-            }
-          } else {
-            router.push('/login');
-          }
+          router.push('/dashboard/doctor');
+        } else if (user.role === 'patient') {
+          router.push('/dashboard/patient');
+        }
+      } else {
+        router.push('/login');
+      }
         }, 200);
       } catch (error) {
         // On error, still complete and redirect to login

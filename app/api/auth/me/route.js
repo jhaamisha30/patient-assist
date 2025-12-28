@@ -34,6 +34,7 @@ export async function GET() {
         name: user.name,
         role: user.role,
         profilePic: user.profilePic || '',
+        verified: user.verified || false,
       },
     });
   } catch (error) {

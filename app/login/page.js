@@ -1,18 +1,56 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { login, getCurrentUser } from '@/lib/api';
+import { login, getCurrentUser, resendVerificationEmail } from '@/lib/api';
+import { toast } from 'react-toastify';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [requiresVerification, setRequiresVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Check for verification success/error messages from URL
+    const verified = searchParams.get('verified');
+    const message = searchParams.get('message');
+    const error = searchParams.get('error');
+
+    if (verified === 'true') {
+      const msg = message === 'success' 
+        ? 'Email verified successfully! You can now log in.' 
+        : message === 'already_verified'
+        ? 'Email is already verified. You can log in.'
+        : decodeURIComponent(message);
+      toast.success(msg);
+      // Clear the URL parameters
+      router.replace('/login');
+    } else if (error) {
+      let errorMsg = '';
+      if (error === 'invalid_token') {
+        errorMsg = 'Invalid verification token. Please request a new verification email.';
+      } else if (error === 'expired_token') {
+        errorMsg = 'Verification token has expired. Please request a new verification email.';
+      } else if (error === 'server_error') {
+        errorMsg = 'Server error occurred. Please try again later.';
+      } else if (error !== 'no_token') {
+        errorMsg = decodeURIComponent(error);
+      }
+      if (errorMsg) {
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+      // Clear the URL parameters
+      router.replace('/login');
+    }
+
     async function checkAuth() {
       const user = await getCurrentUser();
       if (user) {
@@ -26,7 +64,7 @@ export default function LoginPage() {
       }
     }
     checkAuth();
-  }, [router]);
+  }, [router, searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,7 +85,14 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      setError(err.message || 'Login failed');
+      // Check if error is due to unverified email
+      if (err.message && err.message.includes('verify')) {
+        setRequiresVerification(true);
+        setError(err.message);
+      } else {
+        setError(err.message || 'Login failed');
+        setRequiresVerification(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -73,6 +118,30 @@ export default function LoginPage() {
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
               {error}
+              {requiresVerification && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setResending(true);
+                      try {
+                        await resendVerificationEmail();
+                        toast.success('Verification email sent! Please check your inbox.');
+                        setError('');
+                        setRequiresVerification(false);
+                      } catch (err) {
+                        toast.error(err.message || 'Failed to resend verification email');
+                      } finally {
+                        setResending(false);
+                      }
+                    }}
+                    disabled={resending}
+                    className="text-sm text-green-600 hover:text-green-700 underline disabled:opacity-50"
+                  >
+                    {resending ? 'Sending...' : 'Resend verification email'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -127,6 +196,23 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-500 border-r-transparent"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
 

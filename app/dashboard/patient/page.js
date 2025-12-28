@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel, updateProfilePic, uploadImage } from '@/lib/api';
+import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel, updateProfilePic, uploadImage, resendVerificationEmail } from '@/lib/api';
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -132,6 +133,41 @@ export default function PatientDashboard() {
           </div>
         </div>
       </header>
+
+      {/* Email Verification Banner */}
+      {user && !user.verified && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm text-yellow-700">
+                  <strong>Account not verified:</strong> Please verify your email address to access all features. Check your inbox for the verification email.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  setResendingVerification(true);
+                  try {
+                    await resendVerificationEmail();
+                    toast.success('Verification email sent! Please check your inbox.');
+                  } catch (err) {
+                    toast.error(err.message || 'Failed to resend verification email');
+                  } finally {
+                    setResendingVerification(false);
+                  }
+                }}
+                disabled={resendingVerification}
+                className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {resendingVerification ? 'Sending...' : 'Resend Verification Email'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Doctor Information */}
