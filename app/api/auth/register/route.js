@@ -1,19 +1,39 @@
 import { NextResponse } from 'next/server';
 import { hashPassword } from '@/lib/auth';
-import { getUsersCollection, getPatientsCollection } from '@/lib/db';
+import { getUsersCollection, getPatientsCollection, getDoctorsCollection } from '@/lib/db';
 import { sendVerificationEmail } from '@/lib/email';
+import { generateUHID } from '@/lib/uhid';
 import { ObjectId } from 'mongodb';
 import crypto from 'crypto';
 
 export async function POST(request) {
   try {
-    const { email, password, name, role, profilePic, doctorId, age, vitals } = await request.json();
+    const { email, password, name, role, profilePic, doctorId, age, vitals, bloodGroup } = await request.json();
 
     if (!email || !password || !name || !role) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    // Validate blood group for patients
+    if (role === 'patient' && !bloodGroup) {
+      return NextResponse.json(
+        { error: 'Blood group is required for patients' },
+        { status: 400 }
+      );
+    }
+
+    // Validate blood group format
+    if (role === 'patient' && bloodGroup) {
+      const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+      if (!validBloodGroups.includes(bloodGroup)) {
+        return NextResponse.json(
+          { error: 'Invalid blood group' },
+          { status: 400 }
+        );
+      }
     }
 
     // Allow doctor and patient registration
@@ -128,20 +148,52 @@ export async function POST(request) {
     const result = await usersCollection.insertOne(user);
     user._id = result.insertedId;
 
-    // If patient, create patient record
+    // If doctor, create doctor record with doctorId and UHID
+    if (role === 'doctor') {
+      const doctorsCollection = await getDoctorsCollection();
+      
+      // Get the count of existing doctors to generate sequential doctorId
+      const doctorCount = await doctorsCollection.countDocuments();
+      const doctorId = String(doctorCount + 1).padStart(9, '0'); // Generate 9-digit ID, e.g., "000000001"
+      
+      // Generate UHID
+      const uhid = generateUHID(name, doctorId);
+      
+      const doctor = {
+        userId: user._id.toString(),
+        doctorId: doctorId,
+        uhid: uhid,
+        name,
+        email,
+        createdAt: new Date(),
+      };
+      
+      await doctorsCollection.insertOne(doctor);
+    }
+
+    // If patient, create patient record with patientId and UHID
     if (role === 'patient') {
       const patientsCollection = await getPatientsCollection();
+      const doctorsCollection = await getDoctorsCollection();
       let currentDoctor = '';
       
       if (doctorId) {
-        const selectedDoctor = await usersCollection.findOne(
-          { _id: new ObjectId(doctorId), role: 'doctor' },
-          { projection: { password: 0 } }
+        // Look up doctor from doctors collection
+        const selectedDoctor = await doctorsCollection.findOne(
+          { doctorId: doctorId }
         );
         if (selectedDoctor) {
           currentDoctor = selectedDoctor.name;
         }
       }
+
+      // Get the count of existing patients to generate sequential patientId
+      const patientCount = await patientsCollection.countDocuments();
+      const patientIdNum = patientCount + 1;
+      const patientId = String(patientIdNum).padStart(9, '0'); // Generate 9-digit ID, e.g., "000000001"
+      
+      // Generate UHID
+      const uhid = generateUHID(name, patientId);
 
       // Prepare vitals object with provided values or defaults
       const patientVitals = vitals ? {
@@ -166,11 +218,14 @@ export async function POST(request) {
 
       const patient = {
         userId: user._id.toString(),
+        patientId: patientId,
+        uhid: uhid,
         doctorId: doctorId || null,
         currentDoctor: currentDoctor,
         name,
         age: age ? parseInt(age) : 0,
         email,
+        bloodGroup: bloodGroup || '',
         gender: '',
         phone: '',
         address: '',

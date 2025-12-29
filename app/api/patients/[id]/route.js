@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
-import { getPatientsCollection, getUsersCollection, getDiagnosticsCollection } from '@/lib/db';
+import { getCurrentUser, verifyPassword } from '@/lib/auth';
+import { getPatientsCollection, getUsersCollection, getDiagnosticsCollection, getDoctorsCollection } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 
@@ -72,11 +72,21 @@ export async function PUT(request, { params }) {
 
     const patientsCollection = await getPatientsCollection();
     const usersCollection = await getUsersCollection();
+    const doctorsCollection = await getDoctorsCollection();
+
+    // Get doctor's doctorId from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
 
     // Find the patient and verify ownership
     const patient = await patientsCollection.findOne({
       _id: new ObjectId(id),
-      doctorId: currentUser.id,
+      doctorId: doctor.doctorId,
     });
 
     if (!patient) {
@@ -150,15 +160,51 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    // Get password from request body
+    const { password } = await request.json();
+    if (!password) {
+      return NextResponse.json(
+        { error: 'Password is required to delete a patient' },
+        { status: 400 }
+      );
+    }
+
+    // Verify doctor password
+    const usersCollection = await getUsersCollection();
+    const doctorUser = await usersCollection.findOne({ _id: new ObjectId(currentUser.id) });
+    if (!doctorUser) {
+      return NextResponse.json(
+        { error: 'Doctor user not found' },
+        { status: 404 }
+      );
+    }
+
+    const isPasswordValid = await verifyPassword(password, doctorUser.password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: 'Invalid password' },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const patientsCollection = await getPatientsCollection();
-    const usersCollection = await getUsersCollection();
     const diagnosticsCollection = await getDiagnosticsCollection();
+    const doctorsCollection = await getDoctorsCollection();
+    
+    // Get doctor's doctorId from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
     
     // Find the patient and verify ownership
     const patient = await patientsCollection.findOne({
       _id: new ObjectId(id),
-      doctorId: currentUser.id,
+      doctorId: doctor.doctorId,
     });
 
     if (!patient) {

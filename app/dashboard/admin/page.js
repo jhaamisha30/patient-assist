@@ -115,9 +115,9 @@ export default function AdminDashboard() {
 
   const handleDeleteDoctor = async (doctorId, password) => {
     await deleteDoctor(doctorId, password);
-    await loadAllData();
+      await loadAllData();
     setSelectedDoctors(new Set());
-    toast.success('Doctor deleted successfully!');
+      toast.success('Doctor deleted successfully!');
   };
 
   const handleDeletePatient = async (patientId, password) => {
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
         );
         
         await Promise.all(deletePromises);
-        await loadAllData();
+      await loadAllData();
         setSelectedDoctors(new Set());
         
         if (errorCount > 0) {
@@ -490,8 +490,8 @@ export default function AdminDashboard() {
         {activeTab === 'doctors' && (() => {
           const filteredDoctors = getFilteredDoctors();
           return (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-900">All Doctors ({filteredDoctors.length})</h2>
                   <div className="flex flex-wrap items-center gap-4">
@@ -519,11 +519,11 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
                       <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <input
                           type="checkbox"
@@ -532,22 +532,22 @@ export default function AdminDashboard() {
                           className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                         />
                       </th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                       <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
                     {filteredDoctors.length === 0 ? (
-                      <tr>
+                    <tr>
                         <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                          No doctors found.
-                        </td>
-                      </tr>
-                    ) : (
+                        No doctors found.
+                      </td>
+                    </tr>
+                  ) : (
                       filteredDoctors.map((doctor) => (
-                        <tr key={doctor.id} className="hover:bg-gray-50">
+                      <tr key={doctor.id} className="hover:bg-gray-50">
                           <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                             <input
                               type="checkbox"
@@ -556,8 +556,8 @@ export default function AdminDashboard() {
                               className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                             />
                           </td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.name}</td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{doctor.name}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{doctor.email}</td>
                           <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                             {doctor.verified ? (
                               <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">Verified</span>
@@ -565,21 +565,21 @@ export default function AdminDashboard() {
                               <span className="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">Unverified</span>
                             )}
                           </td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
                               onClick={() => handleDeleteDoctorWithPassword(doctor.id)}
-                              className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                            className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
+          </div>
           );
         })()}
 
@@ -587,8 +587,8 @@ export default function AdminDashboard() {
         {activeTab === 'patients' && (() => {
           const filteredPatients = getFilteredPatients();
           return (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-900">All Patients ({filteredPatients.length})</h2>
                   <div className="flex flex-wrap items-center gap-4">
@@ -628,11 +628,11 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
                       <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <input
                           type="checkbox"
@@ -641,24 +641,25 @@ export default function AdminDashboard() {
                           className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                         />
                       </th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blood Group</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
                       <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
                     {filteredPatients.length === 0 ? (
-                      <tr>
-                        <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                          No patients found.
-                        </td>
-                      </tr>
-                    ) : (
+                    <tr>
+                        <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                        No patients found.
+                      </td>
+                    </tr>
+                  ) : (
                       filteredPatients.map((patient) => (
-                        <tr key={patient.id} className="hover:bg-gray-50">
+                      <tr key={patient.id} className="hover:bg-gray-50">
                           <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                             <input
                               type="checkbox"
@@ -667,10 +668,11 @@ export default function AdminDashboard() {
                               className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                             />
                           </td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}</td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.email}</td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.currentDoctor || 'Unassigned'}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}</td>
+                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">{patient.bloodGroup || 'Not specified'}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.email}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.currentDoctor || 'Unassigned'}</td>
                           <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                             {patient.verified ? (
                               <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">Verified</span>
@@ -678,21 +680,21 @@ export default function AdminDashboard() {
                               <span className="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">Unverified</span>
                             )}
                           </td>
-                          <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
                               onClick={() => handleDeletePatientWithPassword(patient.id)}
-                              className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                            className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
+          </div>
           );
         })()}
 
@@ -749,6 +751,7 @@ export default function AdminDashboard() {
                                     <div className="min-w-0 flex-1">
                                       <h4 className="font-medium text-gray-900 text-sm truncate">{patient.name}</h4>
                                       <p className="text-xs text-gray-600 truncate">{patient.email}</p>
+                                      <p className="text-xs text-gray-500 mt-0.5">Blood Group: <span className="font-medium">{patient.bloodGroup || 'Not specified'}</span></p>
                                     </div>
                                   </div>
                                   <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
@@ -843,8 +846,8 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                             <span className="text-xs bg-green-200 text-green-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
-                              {doctorPatients.length} {doctorPatients.length === 1 ? 'patient' : 'patients'}
-                            </span>
+                            {doctorPatients.length} {doctorPatients.length === 1 ? 'patient' : 'patients'}
+                          </span>
                             <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
                               {doctorCertificates.length} {doctorCertificates.length === 1 ? 'cert' : 'certs'}
                             </span>
@@ -894,9 +897,9 @@ export default function AdminDashboard() {
 
                             {/* Patients under Doctor */}
                             <div className="space-y-2">
-                              {doctorPatients.length === 0 ? (
-                                <div className="text-sm text-gray-500 py-2">No patients assigned</div>
-                              ) : (
+                            {doctorPatients.length === 0 ? (
+                              <div className="text-sm text-gray-500 py-2">No patients assigned</div>
+                            ) : (
                                 doctorPatients.map((patient) => {
                                   const patientDiagnostics = diagnostics.filter(d => d.patientId === patient.id);
                                   const isPatientExpanded = expandedPatients.has(patient.id);
@@ -923,6 +926,7 @@ export default function AdminDashboard() {
                                           <div className="min-w-0 flex-1">
                                             <h4 className="font-medium text-gray-900 text-sm truncate">{patient.name}</h4>
                                             <p className="text-xs text-gray-600 truncate">{patient.email}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">Blood Group: <span className="font-medium">{patient.bloodGroup || 'Not specified'}</span></p>
                                           </div>
                                         </div>
                                         <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
@@ -975,7 +979,7 @@ export default function AdminDashboard() {
                                     </div>
                                   );
                                 })
-                              )}
+                            )}
                             </div>
                           </div>
                         )}

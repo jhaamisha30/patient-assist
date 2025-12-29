@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getPatientsCollection, getUsersCollection } from '@/lib/db';
+import { getPatientsCollection, getUsersCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 export async function GET() {
@@ -28,21 +28,27 @@ export async function GET() {
       );
     }
 
-    // Fetch doctor information
+    // Fetch doctor information from doctors collection
     let doctor = null;
     if (patient.doctorId) {
-      doctor = await usersCollection.findOne(
-        { _id: new ObjectId(patient.doctorId) },
-        { projection: { password: 0 } }
-      );
+      const doctorsCollection = await getDoctorsCollection();
+      const doctorDoc = await doctorsCollection.findOne({ doctorId: patient.doctorId });
       
-      if (doctor) {
-        doctor = {
-          id: doctor._id.toString(),
-          name: doctor.name,
-          email: doctor.email,
-          profilePic: doctor.profilePic || '',
-        };
+      if (doctorDoc) {
+        const doctorUser = await usersCollection.findOne(
+          { _id: new ObjectId(doctorDoc.userId) },
+          { projection: { password: 0 } }
+        );
+        
+        if (doctorUser) {
+          doctor = {
+            id: doctorDoc.doctorId,
+            name: doctorUser.name,
+            email: doctorUser.email,
+            profilePic: doctorUser.profilePic || '',
+            uhid: doctorDoc.uhid || '', // Include doctor's UHID
+          };
+        }
       }
     }
 

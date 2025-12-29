@@ -272,6 +272,10 @@ export default function PatientDashboard() {
                   <p className="text-lg font-medium text-gray-900">{patient.age}</p>
                 </div>
                 <div>
+                  <p className="text-sm text-gray-500">Blood Group</p>
+                  <p className="text-lg font-medium text-gray-900">{patient.bloodGroup || 'Not specified'}</p>
+                </div>
+                <div>
                   <p className="text-sm text-gray-500">Email</p>
                   <p className="text-lg font-medium text-gray-900">{patient.email}</p>
                 </div>

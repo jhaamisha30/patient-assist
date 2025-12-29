@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getUsersCollection, getPatientsCollection, getDiagnosticsCollection, getCertificatesCollection } from '@/lib/db';
+import { getUsersCollection, getPatientsCollection, getDiagnosticsCollection, getCertificatesCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 // GET - Get all data for admin
@@ -18,11 +18,38 @@ export async function GET() {
     const usersCollection = await getUsersCollection();
     const patientsCollection = await getPatientsCollection();
     const diagnosticsCollection = await getDiagnosticsCollection();
+    const doctorsCollection = await getDoctorsCollection();
 
-    // Get all doctors (include verified status)
-    const doctors = await usersCollection
-      .find({ role: 'doctor' }, { projection: { password: 0 } })
-      .toArray();
+    // Get all doctors from doctors collection and populate user info for verified status
+    const doctorsDocs = await doctorsCollection.find({}).toArray();
+    
+    // Get user info for doctors to include verified status
+    const doctorUserIds = doctorsDocs
+      .map(d => d.userId ? new ObjectId(d.userId) : null)
+      .filter(Boolean);
+    
+    let doctorUserMap = new Map();
+    if (doctorUserIds.length > 0) {
+      const doctorUsers = await usersCollection
+        .find({ _id: { $in: doctorUserIds } }, { projection: { verified: 1, _id: 1, name: 1, email: 1, profilePic: 1 } })
+        .toArray();
+      doctorUserMap = new Map(doctorUsers.map(u => [u._id.toString(), u]));
+    }
+    
+    // Combine doctor records with user info
+    const doctors = doctorsDocs.map(d => {
+      const userInfo = doctorUserMap.get(d.userId);
+      return {
+        ...d,
+        id: d.doctorId, // Use doctorId as id for consistency
+        _id: undefined,
+        name: userInfo?.name || d.name,
+        email: userInfo?.email || d.email,
+        profilePic: userInfo?.profilePic || '',
+        verified: userInfo?.verified || false,
+        uhid: d.uhid || '', // Include doctor's UHID
+      };
+    });
 
     // Get all patients and populate user info for verified status
     const patients = await patientsCollection.find({}).toArray();
@@ -62,12 +89,11 @@ export async function GET() {
         
         let attendingDoctor = null;
         if (diagnostic.doctorId) {
-          const doctor = await usersCollection.findOne(
-            { _id: new ObjectId(diagnostic.doctorId) },
-            { projection: { password: 0 } }
-          );
+          // Try to find doctor by doctorId first (from doctors collection)
+          const doctor = await doctorsCollection.findOne({ doctorId: diagnostic.doctorId });
           if (doctor) {
-            attendingDoctor = doctor.name;
+            const doctorUser = doctorUserMap.get(doctor.userId);
+            attendingDoctor = doctorUser?.name || doctor.name;
           }
         }
         
@@ -82,11 +108,7 @@ export async function GET() {
     );
 
     return NextResponse.json({
-      doctors: doctors.map(d => ({
-        ...d,
-        id: d._id.toString(),
-        _id: undefined,
-      })),
+      doctors: doctors,
       patients: patientsWithVerified.map(p => ({
         ...p,
         id: p._id.toString(),

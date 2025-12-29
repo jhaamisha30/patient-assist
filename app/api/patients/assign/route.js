@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getPatientsCollection, getUsersCollection } from '@/lib/db';
+import { getPatientsCollection, getUsersCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 // PUT - Assign a patient to a doctor
@@ -25,6 +25,7 @@ export async function PUT(request) {
     }
 
     const patientsCollection = await getPatientsCollection();
+    const doctorsCollection = await getDoctorsCollection();
     const usersCollection = await getUsersCollection();
 
     // Find the patient
@@ -39,19 +40,28 @@ export async function PUT(request) {
       );
     }
 
-    // Get doctor information
-    const doctor = await usersCollection.findOne(
-      { _id: new ObjectId(currentUser.id) },
-      { projection: { password: 0 } }
+    // Get doctor information from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get doctor's name from users collection
+    const doctorUser = await usersCollection.findOne(
+      { _id: new ObjectId(doctor.userId) },
+      { projection: { name: 1 } }
     );
 
-    // Update patient with doctor assignment
+    // Update patient with doctor assignment (use doctorId instead of userId)
     await patientsCollection.updateOne(
       { _id: new ObjectId(patientId) },
       {
         $set: {
-          doctorId: currentUser.id,
-          currentDoctor: doctor ? doctor.name : '',
+          doctorId: doctor.doctorId,
+          currentDoctor: doctorUser?.name || doctor.name,
         },
       }
     );

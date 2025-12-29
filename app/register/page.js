@@ -17,6 +17,7 @@ export default function RegisterPage() {
     role: 'doctor',
     doctorId: '',
     age: '',
+    bloodGroup: '',
     vitals: {
       bloodPressure: '',
       heartRate: '',
@@ -110,6 +111,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      // Validate blood group for patients
+      if (formData.role === 'patient' && !formData.bloodGroup) {
+        setError('Blood group is required');
+        toast.error('Please select your blood group');
+        return;
+      }
+
       const response = await register(
         formData.email,
         formData.password,
@@ -118,7 +126,8 @@ export default function RegisterPage() {
         formData.profilePic,
         formData.role === 'patient' ? formData.doctorId : null,
         formData.role === 'patient' ? formData.age : null,
-        formData.role === 'patient' ? formData.vitals : null
+        formData.role === 'patient' ? formData.vitals : null,
+        formData.role === 'patient' ? formData.bloodGroup : null
       );
       
       if (response.success) {
@@ -224,6 +233,30 @@ export default function RegisterPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                     placeholder="Enter your age"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="bloodGroup" className="block text-sm font-medium text-gray-700 mb-2">
+                    Blood Group <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="bloodGroup"
+                    name="bloodGroup"
+                    value={formData.bloodGroup}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  >
+                    <option value="">Select blood group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
                 </div>
 
                 <div className="border-t pt-4">

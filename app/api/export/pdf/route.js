@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection } from '@/lib/db';
+import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -24,6 +24,7 @@ export async function GET(request) {
     const diagnosticsCollection = await getDiagnosticsCollection();
     const patientsCollection = await getPatientsCollection();
     const usersCollection = await getUsersCollection();
+    const doctorsCollection = await getDoctorsCollection();
 
     let patient;
     let diagnostics;
@@ -41,17 +42,21 @@ export async function GET(request) {
         );
       }
 
-      // Fetch doctor information for patient
+      // Fetch doctor information for patient from doctors collection
       if (patient.doctorId) {
-        const doctorDoc = await usersCollection.findOne(
-          { _id: new ObjectId(patient.doctorId) },
-          { projection: { password: 0 } }
-        );
+        const doctorDoc = await doctorsCollection.findOne({ doctorId: patient.doctorId });
         if (doctorDoc) {
-          doctor = {
-            name: doctorDoc.name,
-            email: doctorDoc.email,
-          };
+          const doctorUser = await usersCollection.findOne(
+            { _id: new ObjectId(doctorDoc.userId) },
+            { projection: { name: 1, email: 1 } }
+          );
+          if (doctorUser) {
+            doctor = {
+              name: doctorUser.name,
+              email: doctorUser.email,
+              uhid: doctorDoc.uhid || '', // Include doctor's UHID
+            };
+          }
         }
       }
 
@@ -67,9 +72,18 @@ export async function GET(request) {
         );
       }
 
+      // Get doctor's doctorId from doctors collection
+      const currentDoctorDoc = await doctorsCollection.findOne({ userId: currentUser.id });
+      if (!currentDoctorDoc) {
+        return NextResponse.json(
+          { error: 'Doctor record not found' },
+          { status: 404 }
+        );
+      }
+
       patient = await patientsCollection.findOne({
         _id: new ObjectId(patientId),
-        doctorId: currentUser.id,
+        doctorId: currentDoctorDoc.doctorId,
       });
 
       if (!patient) {
@@ -80,14 +94,15 @@ export async function GET(request) {
       }
 
       // Fetch doctor information (the current user who is exporting)
-      const doctorDoc = await usersCollection.findOne(
-        { _id: new ObjectId(currentUser.id) },
-        { projection: { password: 0 } }
+      const doctorUser = await usersCollection.findOne(
+        { _id: new ObjectId(currentDoctorDoc.userId) },
+        { projection: { name: 1, email: 1 } }
       );
-      if (doctorDoc) {
+      if (doctorUser) {
         doctor = {
-          name: doctorDoc.name,
-          email: doctorDoc.email,
+          name: doctorUser.name,
+          email: doctorUser.email,
+          uhid: currentDoctorDoc.uhid || '', // Include doctor's UHID
         };
       }
 
@@ -129,6 +144,14 @@ export async function GET(request) {
     
     let yPos = 75;
     
+    // Patient UHID at the top
+    if (patient.uhid) {
+      doc.setFontSize(11);
+      doc.setTextColor(34, 139, 34);
+      doc.text(`Patient UHID: ${patient.uhid}`, 14, yPos);
+      yPos += 10;
+    }
+    
     // Doctor Information (for both patients and doctors)
     if (doctor) {
       doc.setFontSize(12);
@@ -142,7 +165,14 @@ export async function GET(request) {
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       doc.text(doctor.email, 14, yPos + 14);
-      yPos += 25;
+      if (doctor.uhid) {
+        doc.setFontSize(10);
+        doc.setTextColor(34, 139, 34);
+        doc.text(`Doctor UHID: ${doctor.uhid}`, 14, yPos + 21);
+        yPos += 28;
+      } else {
+        yPos += 25;
+      }
     }
     
     // Patient Information
@@ -156,8 +186,9 @@ export async function GET(request) {
     doc.setTextColor(0, 0, 0);
     doc.text(`Patient Name: ${patient.name}`, 14, yPos);
     doc.text(`Age: ${patient.age}`, 14, yPos + 7);
-    doc.text(`Email: ${patient.email}`, 14, yPos + 14);
-    let infoY = yPos + 21;
+    doc.text(`Blood Group: ${patient.bloodGroup || 'Not specified'}`, 14, yPos + 14);
+    doc.text(`Email: ${patient.email}`, 14, yPos + 21);
+    let infoY = yPos + 28;
     if (patient.phone) {
       doc.text(`Phone: ${patient.phone}`, 14, infoY);
       infoY += 7;

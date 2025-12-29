@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getCertificatesCollection, getPatientsCollection } from '@/lib/db';
+import { getCertificatesCollection, getPatientsCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 // GET - list certificates
@@ -15,18 +15,24 @@ export async function GET(request) {
     const doctorId = searchParams.get('doctorId');
     const certificatesCollection = await getCertificatesCollection();
     const patientsCollection = await getPatientsCollection();
+    const doctorsCollection = await getDoctorsCollection();
 
     let query = {};
 
     if (currentUser.role === 'doctor') {
-      query.certificateOfDoctor = currentUser.id;
+      // Get doctor's doctorId from doctors collection
+      const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+      if (!doctor) {
+        return NextResponse.json({ certificates: [] });
+      }
+      query.certificateOfDoctor = doctor.doctorId;
     } else if (currentUser.role === 'patient') {
       // Patients can see only public certificates; determine doctor
       let doctorToView = doctorId;
       if (!doctorToView) {
         const patient = await patientsCollection.findOne({ userId: currentUser.id });
         if (patient && patient.doctorId) {
-          doctorToView = patient.doctorId;
+          doctorToView = patient.doctorId; // patient.doctorId is now the doctorId string
         }
       }
       if (!doctorToView) {
@@ -35,7 +41,7 @@ export async function GET(request) {
       query = { certificateOfDoctor: doctorToView, isPublic: true };
     } else if (currentUser.role === 'admin') {
       if (doctorId) {
-        query.certificateOfDoctor = doctorId;
+        query.certificateOfDoctor = doctorId; // doctorId is already the doctorId string
       }
     } else {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -78,11 +84,23 @@ export async function POST(request) {
     }
 
     const certificatesCollection = await getCertificatesCollection();
+    const doctorsCollection = await getDoctorsCollection();
+    
+    // Get doctor's doctorId from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
+    
     const doc = {
       certificateTitle,
       certificateDescription,
       certificateImage,
-      certificateOfDoctor: currentUser.id,
+      certificateOfDoctor: doctor.doctorId, // Store doctorId instead of userId
+      certificateOfDoctorUHID: doctor.uhid || '', // Store doctor's UHID
       isPublic: !!isPublic,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -117,9 +135,20 @@ export async function PATCH(request) {
     }
 
     const certificatesCollection = await getCertificatesCollection();
+    const doctorsCollection = await getDoctorsCollection();
+    
+    // Get doctor's doctorId from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
+    
     const cert = await certificatesCollection.findOne({
       _id: new ObjectId(id),
-      certificateOfDoctor: currentUser.id,
+      certificateOfDoctor: doctor.doctorId,
     });
     if (!cert) {
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
@@ -151,9 +180,20 @@ export async function DELETE(request) {
     }
 
     const certificatesCollection = await getCertificatesCollection();
+    const doctorsCollection = await getDoctorsCollection();
+    
+    // Get doctor's doctorId from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
+    
     const cert = await certificatesCollection.findOne({
       _id: new ObjectId(id),
-      certificateOfDoctor: currentUser.id,
+      certificateOfDoctor: doctor.doctorId,
     });
     if (!cert) {
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });

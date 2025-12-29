@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection } from '@/lib/db';
+import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 import ExcelJS from 'exceljs';
 
@@ -21,6 +21,7 @@ export async function GET(request) {
     const diagnosticsCollection = await getDiagnosticsCollection();
     const patientsCollection = await getPatientsCollection();
     const usersCollection = await getUsersCollection();
+    const doctorsCollection = await getDoctorsCollection();
 
     let patient;
     let diagnostics;
@@ -38,17 +39,21 @@ export async function GET(request) {
         );
       }
 
-      // Fetch doctor information for patient
+      // Fetch doctor information for patient from doctors collection
       if (patient.doctorId) {
-        const doctorDoc = await usersCollection.findOne(
-          { _id: new ObjectId(patient.doctorId) },
-          { projection: { password: 0 } }
-        );
+        const doctorDoc = await doctorsCollection.findOne({ doctorId: patient.doctorId });
         if (doctorDoc) {
-          doctor = {
-            name: doctorDoc.name,
-            email: doctorDoc.email,
-          };
+          const doctorUser = await usersCollection.findOne(
+            { _id: new ObjectId(doctorDoc.userId) },
+            { projection: { name: 1, email: 1 } }
+          );
+          if (doctorUser) {
+            doctor = {
+              name: doctorUser.name,
+              email: doctorUser.email,
+              uhid: doctorDoc.uhid || '', // Include doctor's UHID
+            };
+          }
         }
       }
 
@@ -64,9 +69,18 @@ export async function GET(request) {
         );
       }
 
+      // Get doctor's doctorId from doctors collection
+      const currentDoctorDoc = await doctorsCollection.findOne({ userId: currentUser.id });
+      if (!currentDoctorDoc) {
+        return NextResponse.json(
+          { error: 'Doctor record not found' },
+          { status: 404 }
+        );
+      }
+
       patient = await patientsCollection.findOne({
         _id: new ObjectId(patientId),
-        doctorId: currentUser.id,
+        doctorId: currentDoctorDoc.doctorId,
       });
 
       if (!patient) {
@@ -77,14 +91,15 @@ export async function GET(request) {
       }
 
       // Fetch doctor information (the current user who is exporting)
-      const doctorDoc = await usersCollection.findOne(
-        { _id: new ObjectId(currentUser.id) },
-        { projection: { password: 0 } }
+      const doctorUser = await usersCollection.findOne(
+        { _id: new ObjectId(currentDoctorDoc.userId) },
+        { projection: { name: 1, email: 1 } }
       );
-      if (doctorDoc) {
+      if (doctorUser) {
         doctor = {
-          name: doctorDoc.name,
-          email: doctorDoc.email,
+          name: doctorUser.name,
+          email: doctorUser.email,
+          uhid: currentDoctorDoc.uhid || '', // Include doctor's UHID
         };
       }
 
@@ -100,11 +115,20 @@ export async function GET(request) {
     // Patient Information Sheet
     const patientSheet = workbook.addWorksheet('Patient Info');
     
+    // Patient UHID at the top
+    if (patient.uhid) {
+      patientSheet.addRow(['Patient UHID', patient.uhid]);
+      patientSheet.addRow([]); // Empty row
+    }
+    
     // Add doctor information at the top (for both patients and doctors)
     if (doctor) {
       patientSheet.addRow(['Attending Doctor Information']);
       patientSheet.addRow(['Doctor Name', `Dr. ${doctor.name}`]);
       patientSheet.addRow(['Doctor Email', doctor.email]);
+      if (doctor.uhid) {
+        patientSheet.addRow(['Doctor UHID', doctor.uhid]);
+      }
       patientSheet.addRow([]); // Empty row
     }
     
@@ -112,6 +136,7 @@ export async function GET(request) {
     patientSheet.addRow(['Patient Information']);
     patientSheet.addRow(['Name', patient.name]);
     patientSheet.addRow(['Age', patient.age]);
+    patientSheet.addRow(['Blood Group', patient.bloodGroup || 'Not specified']);
     patientSheet.addRow(['Email', patient.email]);
     patientSheet.addRow(['Phone', patient.phone || 'N/A']);
     patientSheet.addRow(['Address', patient.address || 'N/A']);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getCertificatesCollection, getUsersCollection } from '@/lib/db';
+import { getCertificatesCollection, getUsersCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 // GET - admin list/search certificates
@@ -15,6 +15,7 @@ export async function GET(request) {
     const doctorId = searchParams.get('doctorId');
 
     const certificatesCollection = await getCertificatesCollection();
+    const doctorsCollection = await getDoctorsCollection();
     const usersCollection = await getUsersCollection();
 
     const query = doctorId ? { certificateOfDoctor: doctorId } : {};
@@ -23,17 +24,29 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    // Fetch doctor info for display
+    // Fetch doctor info for display (certificateOfDoctor is now doctorId string)
     const doctorIds = [...new Set(certificates.map((c) => c.certificateOfDoctor).filter(Boolean))];
     let doctorMap = new Map();
     if (doctorIds.length > 0) {
-      const doctors = await usersCollection
-        .find(
-          { _id: { $in: doctorIds.map((id) => new ObjectId(id)) } },
-          { projection: { name: 1, email: 1 } }
-        )
+      const doctors = await doctorsCollection
+        .find({ doctorId: { $in: doctorIds } })
         .toArray();
-      doctorMap = new Map(doctors.map((d) => [d._id.toString(), { name: d.name, email: d.email }]));
+      
+      // Get user info for doctors
+      const doctorUserIds = doctors.map(d => d.userId).filter(Boolean).map(id => new ObjectId(id));
+      const doctorUsers = await usersCollection
+        .find({ _id: { $in: doctorUserIds } }, { projection: { name: 1, email: 1, _id: 1 } })
+        .toArray();
+      
+      const doctorUserMap = new Map(doctorUsers.map(u => [u._id.toString(), u]));
+      
+      // Map doctorId to doctor info
+      doctors.forEach(doc => {
+        const userInfo = doctorUserMap.get(doc.userId);
+        if (userInfo) {
+          doctorMap.set(doc.doctorId, { name: userInfo.name, email: userInfo.email });
+        }
+      });
     }
 
     return NextResponse.json({

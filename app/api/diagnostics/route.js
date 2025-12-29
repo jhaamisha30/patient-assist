@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection } from '@/lib/db';
+import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection, getDoctorsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 // GET - Get diagnostics for a patient
@@ -35,13 +35,22 @@ export async function GET(request) {
       query.patientId = patient._id.toString();
     } else if (currentUser.role === 'doctor') {
       // Doctor can see diagnostics for their patients
+      const doctorsCollection = await getDoctorsCollection();
+      const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+      if (!doctor) {
+        return NextResponse.json(
+          { error: 'Doctor record not found' },
+          { status: 404 }
+        );
+      }
+
       if (patientId) {
         query.patientId = patientId;
         // Verify patient belongs to doctor
         const patientsCollection = await getPatientsCollection();
         const patient = await patientsCollection.findOne({
           _id: new ObjectId(patientId),
-          doctorId: currentUser.id,
+          doctorId: doctor.doctorId,
         });
         
         if (!patient) {
@@ -54,7 +63,7 @@ export async function GET(request) {
         // Get all patients for this doctor
         const patientsCollection = await getPatientsCollection();
         const patients = await patientsCollection
-          .find({ doctorId: currentUser.id })
+          .find({ doctorId: doctor.doctorId })
           .toArray();
         const patientIds = patients.map(p => p._id.toString());
         query.patientId = { $in: patientIds };
@@ -68,6 +77,7 @@ export async function GET(request) {
 
     // Populate patient name and attending doctor for each diagnostic
     const patientsCollection = await getPatientsCollection();
+    const doctorsCollection = await getDoctorsCollection();
     const usersCollection = await getUsersCollection();
     
     const populatedDiagnostics = await Promise.all(
@@ -78,12 +88,14 @@ export async function GET(request) {
         
         let attendingDoctor = null;
         if (diagnostic.doctorId) {
-          const doctor = await usersCollection.findOne(
-            { _id: new ObjectId(diagnostic.doctorId) },
-            { projection: { password: 0 } }
-          );
+          // Try to find doctor by doctorId (from doctors collection)
+          const doctor = await doctorsCollection.findOne({ doctorId: diagnostic.doctorId });
           if (doctor) {
-            attendingDoctor = doctor.name;
+            const doctorUser = await usersCollection.findOne(
+              { _id: new ObjectId(doctor.userId) },
+              { projection: { name: 1 } }
+            );
+            attendingDoctor = doctorUser?.name || doctor.name;
           }
         }
         
@@ -136,9 +148,20 @@ export async function POST(request) {
     // Verify patient belongs to doctor
     const patientsCollection = await getPatientsCollection();
     const usersCollection = await getUsersCollection();
+    const doctorsCollection = await getDoctorsCollection();
+    
+    // Get doctor's doctorId from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
+    
     const patient = await patientsCollection.findOne({
       _id: new ObjectId(patientId),
-      doctorId: currentUser.id,
+      doctorId: doctor.doctorId,
     });
 
     if (!patient) {
@@ -148,19 +171,19 @@ export async function POST(request) {
       );
     }
 
-    // Get doctor information
-    const doctor = await usersCollection.findOne(
-      { _id: new ObjectId(currentUser.id) },
-      { projection: { password: 0 } }
+    // Get doctor's name from users collection
+    const doctorUser = await usersCollection.findOne(
+      { _id: new ObjectId(doctor.userId) },
+      { projection: { name: 1 } }
     );
 
     const diagnosticsCollection = await getDiagnosticsCollection();
     
     const diagnostic = {
       patientId: patientId,
-      doctorId: currentUser.id,
+      doctorId: doctor.doctorId, // Store doctorId instead of userId
       patientName: patient.name,
-      attendingDoctor: doctor ? doctor.name : '',
+      attendingDoctor: doctorUser?.name || doctor.name,
       diagnosis,
       symptoms: symptoms || '',
       treatment: treatment || '',

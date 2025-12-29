@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getPatientsCollection, getUsersCollection } from '@/lib/db';
+import { getPatientsCollection, getUsersCollection, getDoctorsCollection } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { sendVerificationEmail } from '@/lib/email';
+import { generateUHID } from '@/lib/uhid';
 import { ObjectId } from 'mongodb';
 import crypto from 'crypto';
 
@@ -22,8 +23,18 @@ export async function GET(request) {
     const includeUnassigned = searchParams.get('unassigned') === 'true';
 
     const patientsCollection = await getPatientsCollection();
+    const doctorsCollection = await getDoctorsCollection();
     
-    let query = { doctorId: currentUser.id };
+    // Get doctor's doctorId from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
+    
+    let query = { doctorId: doctor.doctorId };
     
     // If requesting unassigned patients, get those without a doctor
     if (includeUnassigned) {
@@ -32,6 +43,7 @@ export async function GET(request) {
 
     const patients = await patientsCollection.find(query).toArray();
 
+    // Patients already include uhid from collection, so just return them
     return NextResponse.json(
       { patients },
       {
@@ -68,6 +80,7 @@ export async function POST(request) {
       age,
       email,
       password,
+      bloodGroup,
       gender,
       phone,
       address,
@@ -84,8 +97,26 @@ export async function POST(request) {
       );
     }
 
+    // Validate blood group
+    if (!bloodGroup) {
+      return NextResponse.json(
+        { error: 'Blood group is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate blood group format
+    const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    if (!validBloodGroups.includes(bloodGroup)) {
+      return NextResponse.json(
+        { error: 'Invalid blood group' },
+        { status: 400 }
+      );
+    }
+
     const usersCollection = await getUsersCollection();
     const patientsCollection = await getPatientsCollection();
+    const doctorsCollection = await getDoctorsCollection();
 
     // Check if patient email already exists
     const existingUser = await usersCollection.findOne({ email });
@@ -96,11 +127,14 @@ export async function POST(request) {
       );
     }
 
-    // Get doctor information for currentDoctor field
-    const doctor = await usersCollection.findOne(
-      { _id: new ObjectId(currentUser.id) },
-      { projection: { password: 0 } }
-    );
+    // Get doctor information from doctors collection
+    const doctor = await doctorsCollection.findOne({ userId: currentUser.id });
+    if (!doctor) {
+      return NextResponse.json(
+        { error: 'Doctor record not found' },
+        { status: 404 }
+      );
+    }
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -126,14 +160,25 @@ export async function POST(request) {
     const userResult = await usersCollection.insertOne(patientUser);
     const patientUserId = userResult.insertedId.toString();
 
+    // Get the count of existing patients to generate sequential patientId
+    const patientCount = await patientsCollection.countDocuments();
+    const patientIdNum = patientCount + 1;
+    const patientId = String(patientIdNum).padStart(9, '0'); // Generate 9-digit ID, e.g., "000000001"
+    
+    // Generate UHID
+    const uhid = generateUHID(name, patientId);
+
     // Create patient record
     const patient = {
       userId: patientUserId,
-      doctorId: currentUser.id,
-      currentDoctor: doctor ? doctor.name : '',
+      patientId: patientId,
+      uhid: uhid,
+      doctorId: doctor.doctorId,
+      currentDoctor: doctor.name,
       name,
       age: parseInt(age),
       email,
+      bloodGroup: bloodGroup,
       gender: gender || '',
       phone: phone || '',
       address: address || '',

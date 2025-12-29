@@ -22,6 +22,14 @@ export default function DoctorDashboard() {
   const [uploading, setUploading] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState(null);
+  
+  // Password modal state for patient deletion
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordModalCallback, setPasswordModalCallback] = useState(null);
+  const [passwordModalTitle, setPasswordModalTitle] = useState('');
+  const [passwordModalPatientName, setPasswordModalPatientName] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   // Certificates
   const [certificates, setCertificates] = useState([]);
@@ -39,6 +47,7 @@ export default function DoctorDashboard() {
     age: '',
     email: '',
     password: '',
+    bloodGroup: '',
     gender: '',
     phone: '',
     address: '',
@@ -359,28 +368,61 @@ export default function DoctorDashboard() {
     }
   };
 
-  const handleDeletePatient = async (patient) => {
+  const openPasswordModal = (title, patientName, callback) => {
+    setPasswordModalTitle(title);
+    setPasswordModalPatientName(patientName);
+    setPasswordModalCallback(() => callback);
+    setShowPasswordModal(true);
+    setPasswordInput('');
+  };
+
+  const handlePasswordConfirm = async () => {
+    if (!passwordInput) {
+      toast.error('Please enter your password');
+      return;
+    }
+    
+    setDeleting(true);
+    try {
+      if (passwordModalCallback) {
+        await passwordModalCallback(passwordInput);
+        // Only show success and close modal if callback succeeds
+        setShowPasswordModal(false);
+        setPasswordInput('');
+        setPasswordModalCallback(null);
+        setPasswordModalPatientName('');
+      }
+    } catch (error) {
+      // Don't close modal on error, let user try again
+      const errorMessage = error.message || 'An error occurred';
+      if (errorMessage.includes('Invalid password') || errorMessage.includes('Password is required')) {
+        // Expected error - only show toast
+        toast.error(errorMessage);
+      } else {
+        // Unexpected error - show toast and log to console
+        console.error('Delete error:', error);
+        toast.error('Error: ' + errorMessage);
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeletePatient = (patient) => {
     const patientId = patient._id || patient.id;
     const patientName = patient.name;
     
-    // Confirm deletion
-    const confirmed = window.confirm(
-      `Are you sure you want to delete patient "${patientName}"?\n\nThis will permanently delete:\n- Patient record\n- All diagnostic records\n- Patient user account\n\nThis action cannot be undone.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      const response = await deletePatient(patientId);
-      if (response.success) {
-        toast.success('Patient deleted successfully!');
-        await loadPatients(); // Refresh the list
+    openPasswordModal(
+      'Delete Patient',
+      patientName,
+      async (password) => {
+        const response = await deletePatient(patientId, password);
+        if (response.success) {
+          toast.success('Patient deleted successfully!');
+          await loadPatients(); // Refresh the list
+        }
       }
-    } catch (error) {
-      toast.error('Error deleting patient: ' + error.message);
-    }
+    );
   };
 
   if (loading) {
@@ -926,6 +968,25 @@ export default function DoctorDashboard() {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group *</label>
+                  <select
+                    required
+                    value={patientForm.bloodGroup}
+                    onChange={(e) => setPatientForm({ ...patientForm, bloodGroup: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  >
+                    <option value="">Select blood group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
                   <select
                     value={patientForm.gender}
@@ -1452,6 +1513,87 @@ export default function DoctorDashboard() {
                   <img src={user.profilePic} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Confirmation Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{passwordModalTitle}</h3>
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordInput('');
+                  setPasswordModalCallback(null);
+                  setPasswordModalPatientName('');
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+                disabled={deleting}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              {passwordModalPatientName && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold text-red-700">Warning:</span> You are about to delete patient <span className="font-semibold">"{passwordModalPatientName}"</span>
+                  </p>
+                  <p className="text-xs text-gray-600 mt-2">
+                    This will permanently delete:
+                  </p>
+                  <ul className="text-xs text-gray-600 mt-1 ml-4 list-disc">
+                    <li>Patient record</li>
+                    <li>All diagnostic records</li>
+                    <li>Patient user account</li>
+                  </ul>
+                  <p className="text-xs text-red-600 mt-2 font-semibold">This action cannot be undone.</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Enter your password to confirm
+                </label>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !deleting && passwordInput) {
+                      handlePasswordConfirm();
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  placeholder="Password"
+                  disabled={deleting}
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setPasswordInput('');
+                    setPasswordModalCallback(null);
+                    setPasswordModalPatientName('');
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordConfirm}
+                  disabled={deleting || !passwordInput}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Confirm Delete'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

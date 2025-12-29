@@ -26,12 +26,32 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  // Remove any dark class that might be stuck
+                  document.documentElement.classList.remove('dark');
+                  document.body.classList.remove('dark');
+                  // Clear theme from localStorage
+                  localStorage.removeItem('theme');
+                  // Force light mode styles
+                  document.documentElement.style.backgroundColor = '';
+                  document.documentElement.style.color = '';
+                  document.body.style.backgroundColor = '';
+                  document.body.style.color = '';
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="bg-white text-gray-900">
         {children}
         <ToastContainer
           position="top-right"
@@ -43,7 +63,6 @@ export default function RootLayout({ children }) {
           pauseOnFocusLoss
           draggable
           pauseOnHover
-          theme="light"
         />
       </body>
     </html>
