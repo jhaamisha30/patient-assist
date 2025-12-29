@@ -180,8 +180,12 @@ export default function DoctorDashboard() {
         imageUrl: response.url,
       }));
       toast.success('Certificate image uploaded successfully!');
+      // Reset the input so the same file can be selected again if needed
+      e.target.value = '';
     } catch (err) {
       toast.error('Failed to upload certificate image: ' + (err.message || 'Please check your Cloudinary configuration'));
+      // Reset the input on error too
+      e.target.value = '';
     } finally {
       setCertUploading(false);
     }
@@ -782,18 +786,51 @@ export default function DoctorDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Upload Certificate Image (or use camera) *
+                    Upload Certificate Image *
                   </label>
                   <input
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     onChange={handleCertificateImageChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                     disabled={certUploading}
+                    id="certificate-file-input"
+                    style={{ display: 'none' }}
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    On mobile, you can use the camera directly. Supported formats: JPG, PNG.
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById('certificate-file-input');
+                        if (input) {
+                          // Remove capture attribute to allow gallery selection
+                          input.removeAttribute('capture');
+                          input.click();
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                      disabled={certUploading}
+                    >
+                      📁 Choose from Gallery
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById('certificate-file-input');
+                        if (input) {
+                          // Add capture attribute to open camera
+                          input.setAttribute('capture', 'environment');
+                          input.click();
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm font-medium"
+                      disabled={certUploading}
+                    >
+                      📷 Take Photo
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Choose from gallery or take a new photo. Supported formats: JPG, PNG.
                   </p>
                   {certUploading && <p className="mt-2 text-sm text-gray-500">Uploading certificate image...</p>}
                 </div>
