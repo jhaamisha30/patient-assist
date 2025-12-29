@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel, updateProfilePic, uploadImage, resendVerificationEmail } from '@/lib/api';
+import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel, updateProfilePic, uploadImage, resendVerificationEmail, getCertificates } from '@/lib/api';
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -12,10 +12,12 @@ export default function PatientDashboard() {
   const [patient, setPatient] = useState(null);
   const [doctor, setDoctor] = useState(null);
   const [diagnostics, setDiagnostics] = useState([]);
+  const [doctorCertificates, setDoctorCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
+  const [viewingCertificate, setViewingCertificate] = useState(null);
 
   useEffect(() => {
     async function loadData() {
@@ -35,6 +37,14 @@ export default function PatientDashboard() {
         // Get diagnostics
         const diagnosticsData = await getDiagnostics();
         setDiagnostics(diagnosticsData.diagnostics || []);
+
+        // Get doctor's public certificates
+        try {
+          const certData = await getCertificates();
+          setDoctorCertificates(certData.certificates || []);
+        } catch (certError) {
+          console.error('Error loading doctor certificates:', certError);
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -196,6 +206,50 @@ export default function PatientDashboard() {
                   <p className="text-lg font-semibold text-gray-900">{doctor.name}</p>
                   <p className="text-sm text-gray-500">{doctor.email}</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Doctor Certificates (Public) */}
+        {doctorCertificates && doctorCertificates.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Doctor Certificates</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Certificates your doctor has chosen to share publicly.
+                </p>
+              </div>
+            </div>
+            <div className="px-4 sm:px-6 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {doctorCertificates.map((cert) => (
+                  <div
+                    key={cert.id}
+                    className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col"
+                  >
+                    {cert.certificateImage && (
+                      <img
+                        src={cert.certificateImage}
+                        alt={cert.certificateTitle}
+                        className="w-full h-40 object-cover bg-gray-50 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setViewingCertificate(cert)}
+                      />
+                    )}
+                    <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1 truncate">
+                        {cert.certificateTitle}
+                      </h3>
+                      <p className="text-xs text-gray-600 mb-2 line-clamp-3">
+                        {cert.certificateDescription}
+                      </p>
+                      <p className="mt-auto text-[11px] text-gray-400">
+                        Added by Dr. {doctor?.name}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -393,6 +447,44 @@ export default function PatientDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Certificate View Modal */}
+      {viewingCertificate && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                  {viewingCertificate.certificateTitle}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {viewingCertificate.certificateDescription}
+                </p>
+                {doctor && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Added by Dr. {doctor.name}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setViewingCertificate(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 bg-gray-100 flex items-center justify-center">
+              {viewingCertificate.certificateImage && (
+                <img
+                  src={viewingCertificate.certificateImage}
+                  alt={viewingCertificate.certificateTitle}
+                  className="max-w-full max-h-full object-contain"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile Picture Modal */}
       {showProfileModal && (

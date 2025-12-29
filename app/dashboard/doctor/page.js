@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { getCurrentUser, getPatients, addPatient, addDiagnostic, getDiagnostics, deletePatient, logout, exportToPDF, exportToExcel, getUnassignedPatients, assignPatient, updateProfilePic, uploadImage, updatePatient, resendVerificationEmail } from '@/lib/api';
+import { getCurrentUser, getPatients, addPatient, addDiagnostic, getDiagnostics, deletePatient, logout, exportToPDF, exportToExcel, getUnassignedPatients, assignPatient, updateProfilePic, uploadImage, updatePatient, resendVerificationEmail, getCertificates, addCertificate, updateCertificateVisibility, deleteCertificate } from '@/lib/api';
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -21,6 +21,18 @@ export default function DoctorDashboard() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
+  const [viewingCertificate, setViewingCertificate] = useState(null);
+
+  // Certificates
+  const [certificates, setCertificates] = useState([]);
+  const [certLoading, setCertLoading] = useState(false);
+  const [certForm, setCertForm] = useState({
+    title: '',
+    description: '',
+    imageUrl: '',
+    isPublic: false,
+  });
+  const [certUploading, setCertUploading] = useState(false);
 
   const [patientForm, setPatientForm] = useState({
     name: '',
@@ -83,6 +95,18 @@ export default function DoctorDashboard() {
     }
   };
 
+  const loadCertificates = async () => {
+    try {
+      setCertLoading(true);
+      const data = await getCertificates();
+      setCertificates(data.certificates || []);
+    } catch (error) {
+      console.error('Error loading certificates:', error);
+    } finally {
+      setCertLoading(false);
+    }
+  };
+
   const handleAssignPatient = async (patientId) => {
     try {
       await assignPatient(patientId);
@@ -124,6 +148,7 @@ export default function DoctorDashboard() {
       
       await loadPatients();
       await loadUnassignedPatients();
+      await loadCertificates();
       setLoading(false);
     }
     loadData();
@@ -132,6 +157,79 @@ export default function DoctorDashboard() {
   const handleLogout = async () => {
     await logout();
     router.push('/login');
+  };
+
+  const handleCertificateImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setCertUploading(true);
+    try {
+      const response = await uploadImage(file);
+      setCertForm((prev) => ({
+        ...prev,
+        imageUrl: response.url,
+      }));
+      toast.success('Certificate image uploaded successfully!');
+    } catch (err) {
+      toast.error('Failed to upload certificate image: ' + (err.message || 'Please check your Cloudinary configuration'));
+    } finally {
+      setCertUploading(false);
+    }
+  };
+
+  const handleAddCertificate = async (e) => {
+    e.preventDefault();
+    if (!certForm.title || !certForm.description || !certForm.imageUrl) {
+      toast.error('Please provide title, description, and image for the certificate.');
+      return;
+    }
+
+    try {
+      const response = await addCertificate({
+        certificateTitle: certForm.title,
+        certificateDescription: certForm.description,
+        certificateImage: certForm.imageUrl,
+        isPublic: certForm.isPublic,
+      });
+      if (response.success) {
+        toast.success('Certificate added successfully!');
+        setCertForm({
+          title: '',
+          description: '',
+          imageUrl: '',
+          isPublic: false,
+        });
+        await loadCertificates();
+      }
+    } catch (error) {
+      toast.error('Error adding certificate: ' + error.message);
+    }
+  };
+
+  const handleToggleCertificateVisibility = async (certId, isPublic) => {
+    try {
+      await updateCertificateVisibility(certId, isPublic);
+      toast.success(`Certificate marked as ${isPublic ? 'Public' : 'Private'}`);
+      await loadCertificates();
+    } catch (error) {
+      toast.error('Error updating certificate visibility: ' + error.message);
+    }
+  };
+
+  const handleDeleteCertificate = async (certId) => {
+    const confirmed = window.confirm('Are you sure you want to delete this certificate? This action cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      const response = await deleteCertificate(certId);
+      if (response.success) {
+        toast.success('Certificate deleted successfully!');
+        await loadCertificates();
+      }
+    } catch (error) {
+      toast.error('Error deleting certificate: ' + error.message);
+    }
   };
 
   const handleAddPatient = async (e) => {
@@ -573,6 +671,201 @@ export default function DoctorDashboard() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Certificates Section */}
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">My Certificates</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Upload professional certificates and choose whether they are visible to patients.
+              </p>
+            </div>
+          </div>
+
+          {/* Add Certificate Form */}
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <form onSubmit={handleAddCertificate} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Certificate Title *</label>
+                  <input
+                    type="text"
+                    value={certForm.title}
+                    onChange={(e) => setCertForm({ ...certForm, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    placeholder="e.g., MBBS, MD Internal Medicine"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+                  <div className="flex items-center space-x-4 mt-1">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="certVisibility"
+                        checked={!certForm.isPublic}
+                        onChange={() => setCertForm({ ...certForm, isPublic: false })}
+                        className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                      />
+                      <span className="text-sm text-gray-700">Private</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="certVisibility"
+                        checked={certForm.isPublic}
+                        onChange={() => setCertForm({ ...certForm, isPublic: true })}
+                        className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                      />
+                      <span className="text-sm text-gray-700">Public</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Certificate Description *</label>
+                <textarea
+                  value={certForm.description}
+                  onChange={(e) => setCertForm({ ...certForm, description: e.target.value })}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  placeholder="Describe the certificate (institution, specialization, year, etc.)"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Upload Certificate Image (or use camera) *
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleCertificateImageChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    disabled={certUploading}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    On mobile, you can use the camera directly. Supported formats: JPG, PNG.
+                  </p>
+                  {certUploading && <p className="mt-2 text-sm text-gray-500">Uploading certificate image...</p>}
+                </div>
+                {certForm.imageUrl && (
+                  <div className="flex flex-col items-start space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Preview</p>
+                    <img
+                      src={certForm.imageUrl}
+                      alt="Certificate preview"
+                      className="w-full max-w-xs border border-gray-200 rounded-lg object-contain bg-gray-50"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCertForm({
+                      title: '',
+                      description: '',
+                      imageUrl: '',
+                      isPublic: false,
+                    })
+                  }
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors w-full sm:w-auto"
+                >
+                  Clear
+                </button>
+                <button
+                  type="submit"
+                  disabled={certUploading}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {certUploading ? 'Uploading...' : 'Add Certificate'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Certificates List */}
+          <div className="px-4 sm:px-6 py-4">
+            {certLoading ? (
+              <p className="text-sm text-gray-500">Loading certificates...</p>
+            ) : certificates.length === 0 ? (
+              <p className="text-sm text-gray-500">No certificates added yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {certificates.map((cert) => (
+                  <div
+                    key={cert.id}
+                    className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col"
+                  >
+                    {cert.certificateImage && (
+                      <img
+                        src={cert.certificateImage}
+                        alt={cert.certificateTitle}
+                        className="w-full h-40 object-cover bg-gray-50 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setViewingCertificate(cert)}
+                      />
+                    )}
+                    <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold text-gray-900 truncate">
+                          {cert.certificateTitle}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            cert.isPublic
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {cert.isPublic ? 'Public' : 'Private'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-3 line-clamp-3">
+                        {cert.certificateDescription}
+                      </p>
+                      <div className="mt-auto flex items-center justify-between space-x-2 pt-2 border-t border-gray-100">
+                        <div className="flex items-center space-x-3">
+                          <label className="flex items-center space-x-1 cursor-pointer text-xs">
+                            <input
+                              type="radio"
+                              name={`visibility-${cert.id}`}
+                              checked={!cert.isPublic}
+                              onChange={() => handleToggleCertificateVisibility(cert.id, false)}
+                              className="w-3 h-3 text-green-600 border-gray-300 focus:ring-green-500"
+                            />
+                            <span className="text-gray-700">Private</span>
+                          </label>
+                          <label className="flex items-center space-x-1 cursor-pointer text-xs">
+                            <input
+                              type="radio"
+                              name={`visibility-${cert.id}`}
+                              checked={cert.isPublic}
+                              onChange={() => handleToggleCertificateVisibility(cert.id, true)}
+                              className="w-3 h-3 text-green-600 border-gray-300 focus:ring-green-500"
+                            />
+                            <span className="text-gray-700">Public</span>
+                          </label>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteCertificate(cert.id)}
+                          className="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1089,6 +1382,39 @@ export default function DoctorDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Certificate View Modal */}
+      {viewingCertificate && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                  {viewingCertificate.certificateTitle}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {viewingCertificate.certificateDescription}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingCertificate(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 bg-gray-100 flex items-center justify-center">
+              {viewingCertificate.certificateImage && (
+                <img
+                  src={viewingCertificate.certificateImage}
+                  alt={viewingCertificate.certificateTitle}
+                  className="max-w-full max-h-full object-contain"
+                />
+              )}
+            </div>
           </div>
         </div>
       )}

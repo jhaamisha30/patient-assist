@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getUsersCollection, getPatientsCollection, getDiagnosticsCollection } from '@/lib/db';
+import { getUsersCollection, getPatientsCollection, getDiagnosticsCollection, getCertificatesCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 // GET - Get all data for admin
@@ -49,6 +49,10 @@ export async function GET() {
     // Get all diagnostics
     const diagnostics = await diagnosticsCollection.find({}).toArray();
 
+    // Get all certificates
+    const certificatesCollection = await getCertificatesCollection();
+    const certificates = await certificatesCollection.find({}).toArray();
+
     // Populate patient name and attending doctor for each diagnostic
     const populatedDiagnostics = await Promise.all(
       diagnostics.map(async (diagnostic) => {
@@ -89,6 +93,11 @@ export async function GET() {
         _id: undefined,
       })),
       diagnostics: populatedDiagnostics,
+      certificates: certificates.map(c => ({
+        ...c,
+        id: c._id.toString(),
+        _id: undefined,
+      })),
     });
   } catch (error) {
     console.error('Admin get data error:', error);

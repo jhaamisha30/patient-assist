@@ -4,6 +4,8 @@ import { getDiagnosticsCollection, getPatientsCollection, getUsersCollection } f
 import { ObjectId } from 'mongodb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(request) {
   try {
@@ -98,12 +100,34 @@ export async function GET(request) {
     // Create PDF
     const doc = new jsPDF();
     
-    // Header
+    // Helper function to add logo to a page
+    const addLogoToPage = (pdfDoc) => {
+      try {
+        // Try to load the Patient Assist logo (PNG version for jsPDF compatibility)
+        const iconPath = path.join(process.cwd(), 'public', 'icon-512.png');
+        
+        if (fs.existsSync(iconPath)) {
+          const logoBuffer = fs.readFileSync(iconPath);
+          const logoData = 'data:image/png;base64,' + logoBuffer.toString('base64');
+          // Add logo at top center
+          // Page width is 210mm, logo width 40mm, so center at (210-40)/2 = 85mm
+          pdfDoc.addImage(logoData, 'PNG', 85, 8, 40, 40); // x, y, width, height (in mm)
+        }
+      } catch (logoError) {
+        console.error('Error loading logo:', logoError);
+        // Continue without logo if it fails
+      }
+    };
+
+    // Add logo at the top of first page
+    addLogoToPage(doc);
+    
+    // Header text below logo
     doc.setFontSize(20);
     doc.setTextColor(34, 139, 34); // Green color
-    doc.text('Patient Diagnostic Report', 14, 20);
+    doc.text('Patient Diagnostic Report', 14, 60);
     
-    let yPos = 35;
+    let yPos = 75;
     
     // Doctor Information (for both patients and doctors)
     if (doctor) {
@@ -251,6 +275,8 @@ export async function GET(request) {
             if (yPos > 250) {
               doc.addPage();
               yPos = 20;
+              // Add logo on new pages too
+              addLogoToPage(doc);
             }
             
             doc.setFontSize(9);
@@ -272,6 +298,22 @@ export async function GET(request) {
       });
     } else {
       doc.text('No diagnostic records found.', 14, yPos);
+    }
+
+    // Add footer on all pages
+    const pageCount = doc.internal.pages.length - 1; // -1 because pages array includes a blank page at index 0
+    const footerText = 'MADE BY AMISHA AND ABHISHEK';
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      // Center the footer text
+      const textWidth = doc.getTextWidth(footerText);
+      const xPosition = (pageWidth - textWidth) / 2;
+      doc.text(footerText, xPosition, pageHeight - 10);
     }
 
     // Generate PDF buffer
