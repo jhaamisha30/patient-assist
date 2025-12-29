@@ -431,11 +431,11 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="flex space-x-8">
+        <div className="mb-6 border-b border-gray-200 overflow-x-auto">
+          <nav className="flex space-x-4 sm:space-x-8 min-w-max">
             <button
               onClick={() => setActiveTab('doctors')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'doctors'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -445,7 +445,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('patients')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'patients'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -455,7 +455,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('diagnostics')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'diagnostics'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -465,7 +465,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('tree')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'tree'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -475,7 +475,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('certificates')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'certificates'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -710,15 +710,15 @@ export default function AdminDashboard() {
                 if (unassignedPatients.length > 0) {
                   return (
                     <div className="mb-6 border border-orange-200 rounded-lg">
-                      <div className="flex items-center justify-between p-3 bg-orange-50">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-lg">⚠️</span>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">Unassigned Patients</h3>
-                            <p className="text-xs text-gray-600">Patients without an attending doctor</p>
+                      <div className="flex items-center justify-between gap-2 p-3 bg-orange-50">
+                        <div className="flex items-center space-x-3 min-w-0 flex-1">
+                          <span className="text-lg flex-shrink-0">⚠️</span>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-gray-900 truncate">Unassigned Patients</h3>
+                            <p className="text-xs text-gray-600 truncate">Patients without an attending doctor</p>
                           </div>
                         </div>
-                        <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-orange-200 text-orange-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
                           {unassignedPatients.length} {unassignedPatients.length === 1 ? 'patient' : 'patients'}
                         </span>
                       </div>
@@ -731,7 +731,7 @@ export default function AdminDashboard() {
                             return (
                               <div key={patient.id} className="border border-gray-300 rounded-lg bg-white">
                                 <div
-                                  className="flex items-center justify-between p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors"
+                                  className="flex items-center justify-between gap-2 p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors"
                                   onClick={() => {
                                     const newExpanded = new Set(expandedPatients);
                                     if (newExpanded.has(patient.id)) {
@@ -742,17 +742,17 @@ export default function AdminDashboard() {
                                     setExpandedPatients(newExpanded);
                                   }}
                                 >
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-sm">
+                                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                    <span className="text-sm flex-shrink-0">
                                       {isPatientExpanded ? '▼' : '▶'}
                                     </span>
-                                    <div>
-                                      <h4 className="font-medium text-gray-900 text-sm">{patient.name}</h4>
-                                      <p className="text-xs text-gray-600">{patient.email}</p>
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="font-medium text-gray-900 text-sm truncate">{patient.name}</h4>
+                                      <p className="text-xs text-gray-600 truncate">{patient.email}</p>
                                     </div>
                                   </div>
-                                  <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">
-                                    {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diagnostic' : 'diagnostics'}
+                                  <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+                                    {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diag' : 'diags'}
                                   </span>
                                 </div>
 
@@ -821,7 +821,7 @@ export default function AdminDashboard() {
                       <div key={doctor.id} className="border border-gray-200 rounded-lg">
                         {/* Doctor Node */}
                         <div
-                          className="flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 cursor-pointer transition-colors"
+                          className="flex items-center justify-between gap-2 p-3 bg-green-50 hover:bg-green-100 cursor-pointer transition-colors"
                           onClick={() => {
                             const newExpanded = new Set(expandedDoctors);
                             if (newExpanded.has(doctor.id)) {
@@ -832,21 +832,21 @@ export default function AdminDashboard() {
                             setExpandedDoctors(newExpanded);
                           }}
                         >
-                          <div className="flex items-center space-x-3">
-                            <span className="text-lg">
+                          <div className="flex items-center space-x-3 min-w-0 flex-1">
+                            <span className="text-lg flex-shrink-0">
                               {isDoctorExpanded ? '▼' : '▶'}
                             </span>
-                            <div>
-                              <h3 className="font-semibold text-gray-900">Dr. {doctor.name}</h3>
-                              <p className="text-xs text-gray-600">{doctor.email}</p>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-gray-900 truncate">Dr. {doctor.name}</h3>
+                              <p className="text-xs text-gray-600 truncate">{doctor.email}</p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
+                          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                            <span className="text-xs bg-green-200 text-green-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
                               {doctorPatients.length} {doctorPatients.length === 1 ? 'patient' : 'patients'}
                             </span>
-                            <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">
-                              {doctorCertificates.length} {doctorCertificates.length === 1 ? 'certificate' : 'certificates'}
+                            <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
+                              {doctorCertificates.length} {doctorCertificates.length === 1 ? 'cert' : 'certs'}
                             </span>
                           </div>
                         </div>
@@ -856,12 +856,12 @@ export default function AdminDashboard() {
                           <div className="pl-6 pr-3 py-2 bg-gray-50 space-y-3">
                             {/* Certificates under Doctor */}
                             <div className="border border-blue-200 rounded-lg bg-white">
-                              <div className="flex items-center justify-between p-2 bg-blue-50">
-                                <div className="flex items-center space-x-2">
+                              <div className="flex items-center justify-between gap-2 p-2 bg-blue-50">
+                                <div className="flex items-center space-x-2 min-w-0 flex-1">
                                   <span className="text-sm font-semibold text-gray-900">Certificates</span>
                                 </div>
-                                <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">
-                                  {doctorCertificates.length} {doctorCertificates.length === 1 ? 'certificate' : 'certificates'}
+                                <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+                                  {doctorCertificates.length} {doctorCertificates.length === 1 ? 'cert' : 'certs'}
                                 </span>
                               </div>
                               <div className="pl-4 pr-3 py-2">
@@ -905,7 +905,7 @@ export default function AdminDashboard() {
                                     <div key={patient.id} className="border border-gray-300 rounded-lg bg-white">
                                       {/* Patient Node */}
                                       <div
-                                        className="flex items-center justify-between p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors"
+                                        className="flex items-center justify-between gap-2 p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors"
                                         onClick={() => {
                                           const newExpanded = new Set(expandedPatients);
                                           if (newExpanded.has(patient.id)) {
@@ -916,17 +916,17 @@ export default function AdminDashboard() {
                                           setExpandedPatients(newExpanded);
                                         }}
                                       >
-                                        <div className="flex items-center space-x-2">
-                                          <span className="text-sm">
+                                        <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                          <span className="text-sm flex-shrink-0">
                                             {isPatientExpanded ? '▼' : '▶'}
                                           </span>
-                                          <div>
-                                            <h4 className="font-medium text-gray-900 text-sm">{patient.name}</h4>
-                                            <p className="text-xs text-gray-600">{patient.email}</p>
+                                          <div className="min-w-0 flex-1">
+                                            <h4 className="font-medium text-gray-900 text-sm truncate">{patient.name}</h4>
+                                            <p className="text-xs text-gray-600 truncate">{patient.email}</p>
                                           </div>
                                         </div>
-                                        <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">
-                                          {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diagnostic' : 'diagnostics'}
+                                        <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+                                          {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diag' : 'diags'}
                                         </span>
                                       </div>
 
@@ -1080,72 +1080,85 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="px-4 sm:px-6 py-4 overflow-x-auto">
-              {certificates.length === 0 ? (
-                <p className="text-sm text-gray-500">No certificates found.</p>
-              ) : (
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Doctor
-                      </th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
-                      </th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Visibility
-                      </th>
-                      <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {certificates
-                      .filter((cert) =>
-                        certDoctorFilter ? cert.certificateOfDoctor === certDoctorFilter : true
-                      )
-                      .map((cert) => {
+            <div className="px-4 sm:px-6 py-4">
+              {(() => {
+                const filteredCerts = certificates.filter((cert) =>
+                  certDoctorFilter ? cert.certificateOfDoctor === certDoctorFilter : true
+                );
+
+                if (filteredCerts.length === 0) {
+                  return <p className="text-sm text-gray-500">No certificates found.</p>;
+                }
+
+                return (
+                  <>
+                    {/* Mobile Card View */}
+                    <div className="block md:hidden space-y-4">
+                      {filteredCerts.map((cert) => {
                         const doctorInfo = doctors.find((d) => d.id === cert.certificateOfDoctor);
                         return (
-                          <tr key={cert.id} className="hover:bg-gray-50">
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div
+                            key={cert.id}
+                            className="border border-gray-200 rounded-lg bg-white p-4 space-y-3 overflow-hidden"
+                          >
+                            {/* Doctor Info */}
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                Doctor
+                              </p>
                               {doctorInfo ? (
-                                <>
-                                  <span className="font-medium">Dr. {doctorInfo.name}</span>
-                                  <span className="block text-xs text-gray-500">{doctorInfo.email}</span>
-                                </>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900 break-words">
+                                    Dr. {doctorInfo.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500 break-words">
+                                    {doctorInfo.email}
+                                  </p>
+                                </div>
                               ) : (
-                                <span className="text-xs text-gray-500">Unknown</span>
+                                <p className="text-sm text-gray-500">Unknown</p>
                               )}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            </div>
+
+                            {/* Title */}
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                Title
+                              </p>
                               <button
                                 onClick={() => setViewingCertificate(cert)}
-                                className="text-green-600 hover:text-green-700 hover:underline cursor-pointer"
+                                className="text-sm font-semibold text-green-600 hover:text-green-700 hover:underline break-words text-left"
                               >
                                 {cert.certificateTitle}
                               </button>
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 text-sm text-gray-500 max-w-xs">
-                              <p className="line-clamp-2">{cert.certificateDescription}</p>
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
-                              {cert.isPublic ? (
-                                <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-                                  Public
-                                </span>
-                              ) : (
-                                <span className="px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
-                                  Private
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            </div>
+
+                            {/* Description */}
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                Description
+                              </p>
+                              <p className="text-sm text-gray-700 line-clamp-3 break-words">
+                                {cert.certificateDescription}
+                              </p>
+                            </div>
+
+                            {/* Visibility and Actions */}
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                  Visibility
+                                </p>
+                                {cert.isPublic ? (
+                                  <span className="inline-block px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                                    Public
+                                  </span>
+                                ) : (
+                                  <span className="inline-block px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
+                                    Private
+                                  </span>
+                                )}
+                              </div>
                               <button
                                 onClick={() =>
                                   openPasswordModal('Delete Certificate', async (password) => {
@@ -1154,17 +1167,100 @@ export default function AdminDashboard() {
                                     await loadAllData();
                                   })
                                 }
-                                className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
+                                className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
                               >
                                 Delete
                               </button>
-                            </td>
-                          </tr>
+                            </div>
+                          </div>
                         );
                       })}
-                  </tbody>
-                </table>
-              )}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Doctor
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Title
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Description
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Visibility
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredCerts.map((cert) => {
+                            const doctorInfo = doctors.find((d) => d.id === cert.certificateOfDoctor);
+                            return (
+                              <tr key={cert.id} className="hover:bg-gray-50">
+                                <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {doctorInfo ? (
+                                    <>
+                                      <span className="font-medium">Dr. {doctorInfo.name}</span>
+                                      <span className="block text-xs text-gray-500">
+                                        {doctorInfo.email}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-gray-500">Unknown</span>
+                                  )}
+                                </td>
+                                <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  <button
+                                    onClick={() => setViewingCertificate(cert)}
+                                    className="text-green-600 hover:text-green-700 hover:underline cursor-pointer"
+                                  >
+                                    {cert.certificateTitle}
+                                  </button>
+                                </td>
+                                <td className="px-4 lg:px-6 py-4 text-sm text-gray-500 max-w-xs">
+                                  <p className="line-clamp-2">{cert.certificateDescription}</p>
+                                </td>
+                                <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
+                                  {cert.isPublic ? (
+                                    <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                                      Public
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
+                                      Private
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                  <button
+                                    onClick={() =>
+                                      openPasswordModal('Delete Certificate', async (password) => {
+                                        await deleteAdminCertificate(cert.id, password);
+                                        toast.success('Certificate deleted successfully!');
+                                        await loadAllData();
+                                      })
+                                    }
+                                    className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
+                                  >
+                                    Delete
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
