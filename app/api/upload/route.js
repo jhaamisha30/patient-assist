@@ -25,20 +25,44 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Determine resource type based on file type
+    const fileType = file.type;
+    let resourceType = 'image';
+    if (fileType === 'application/pdf') {
+      resourceType = 'raw'; // PDFs are uploaded as raw files in Cloudinary
+    }
+
     // Upload to Cloudinary
     const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            resource_type: 'image',
-            folder: 'patient-assist',
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        )
-        .end(buffer);
+      if (resourceType === 'raw') {
+        // For PDFs, use upload_stream with raw resource type
+        cloudinary.uploader
+          .upload_stream(
+            {
+              resource_type: 'raw',
+              folder: 'patient-assist',
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          )
+          .end(buffer);
+      } else {
+        // For images, use image resource type
+        cloudinary.uploader
+          .upload_stream(
+            {
+              resource_type: 'image',
+              folder: 'patient-assist',
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          )
+          .end(buffer);
+      }
     });
 
     return NextResponse.json({

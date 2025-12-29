@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel, updateProfilePic, uploadImage, resendVerificationEmail, getCertificates } from '@/lib/api';
+import { getCurrentUser, getDiagnostics, getMyPatientRecord, logout, exportToPDF, exportToExcel, updateProfilePic, uploadImage, resendVerificationEmail, getCertificates, getLabReports } from '@/lib/api';
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -13,6 +13,7 @@ export default function PatientDashboard() {
   const [doctor, setDoctor] = useState(null);
   const [diagnostics, setDiagnostics] = useState([]);
   const [doctorCertificates, setDoctorCertificates] = useState([]);
+  const [labReports, setLabReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -44,6 +45,14 @@ export default function PatientDashboard() {
           setDoctorCertificates(certData.certificates || []);
         } catch (certError) {
           console.error('Error loading doctor certificates:', certError);
+        }
+
+        // Get lab reports
+        try {
+          const labReportsData = await getLabReports();
+          setLabReports(labReportsData.labReports || []);
+        } catch (labError) {
+          console.error('Error loading lab reports:', labError);
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -444,6 +453,67 @@ export default function PatientDashboard() {
                         <p className="text-sm text-gray-600">{diagnostic.notes}</p>
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Lab Reports */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">My Lab Reports</h2>
+          </div>
+          <div className="overflow-x-auto">
+            {labReports.length === 0 ? (
+              <div className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                No lab reports found.
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {labReports.map((report) => (
+                  <div key={report.id} className="px-4 sm:px-6 py-4 hover:bg-gray-50">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500">
+                          {new Date(report.createdAt).toLocaleDateString()}
+                        </p>
+                        {report.description && (
+                          <p className="text-sm text-gray-600 mt-1">{report.description}</p>
+                        )}
+                        {report.doctor && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Doctor: <span className="font-medium">{report.doctor.name}</span>
+                            {report.doctor.uhid && (
+                              <span className="text-xs text-gray-500 ml-2">(UHID: {report.doctor.uhid})</span>
+                            )}
+                          </p>
+                        )}
+                        {report.patient && report.patient.uhid && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Patient UHID: <span className="font-medium">{report.patient.uhid}</span>
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <a
+                          href={`/api/lab-reports/download?id=${report.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                        >
+                          View
+                        </a>
+                        <a
+                          href={`/api/lab-reports/download?id=${report.id}`}
+                          download
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getUsersCollection, getPatientsCollection, getDiagnosticsCollection, getCertificatesCollection, getDoctorsCollection } from '@/lib/db';
+import { getUsersCollection, getPatientsCollection, getDiagnosticsCollection, getCertificatesCollection, getDoctorsCollection, getLabReportsCollection } from '@/lib/db';
 import { ObjectId } from 'mongodb';
 
 // GET - Get all data for admin
@@ -80,6 +80,10 @@ export async function GET() {
     const certificatesCollection = await getCertificatesCollection();
     const certificates = await certificatesCollection.find({}).toArray();
 
+    // Get all lab reports
+    const labReportsCollection = await getLabReportsCollection();
+    const labReports = await labReportsCollection.find({}).toArray();
+
     // Populate patient name and attending doctor for each diagnostic
     const populatedDiagnostics = await Promise.all(
       diagnostics.map(async (diagnostic) => {
@@ -118,6 +122,11 @@ export async function GET() {
       certificates: certificates.map(c => ({
         ...c,
         id: c._id.toString(),
+        _id: undefined,
+      })),
+      labReports: labReports.map(lr => ({
+        ...lr,
+        id: lr._id.toString(),
         _id: undefined,
       })),
     });

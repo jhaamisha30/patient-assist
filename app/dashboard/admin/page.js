@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { getCurrentUser, getAdminData, deleteDoctor, deletePatientAdmin, deleteDiagnostic, logout, updateProfilePic, uploadImage, resendVerificationEmail, getAdminCertificates, deleteAdminCertificate } from '@/lib/api';
+import { getCurrentUser, getAdminData, deleteDoctor, deletePatientAdmin, deleteDiagnostic, logout, updateProfilePic, uploadImage, resendVerificationEmail, getAdminCertificates, deleteAdminCertificate, getLabReports, deleteLabReport } from '@/lib/api';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [patients, setPatients] = useState([]);
   const [diagnostics, setDiagnostics] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [allLabReports, setAllLabReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('doctors');
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -41,6 +42,11 @@ export default function AdminDashboard() {
   const [certDoctorFilter, setCertDoctorFilter] = useState('');
   const [viewingCertificate, setViewingCertificate] = useState(null);
 
+  // Lab Reports tab state
+  const [labReports, setLabReports] = useState([]);
+  const [labReportSearch, setLabReportSearch] = useState('');
+  const [labReportLoading, setLabReportLoading] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       const currentUser = await getCurrentUser();
@@ -62,8 +68,25 @@ export default function AdminDashboard() {
       setPatients(data.patients || []);
       setDiagnostics(data.diagnostics || []);
       setCertificates(data.certificates || []);
+      const labReportsData = data.labReports || [];
+      setAllLabReports(labReportsData);
+      // Initialize labReports from allLabReports so the tab count is correct
+      setLabReports(labReportsData);
     } catch (error) {
       console.error('Error loading admin data:', error);
+    }
+  };
+
+  const loadLabReports = async (searchQuery = '') => {
+    try {
+      setLabReportLoading(true);
+      const data = await getLabReports(null, searchQuery || null);
+      setLabReports(data.labReports || []);
+    } catch (error) {
+      console.error('Error loading lab reports:', error);
+      toast.error('Error loading lab reports: ' + error.message);
+    } finally {
+      setLabReportLoading(false);
     }
   };
 
@@ -483,6 +506,19 @@ export default function AdminDashboard() {
             >
               Certificates ({certificates.length})
             </button>
+            <button
+              onClick={() => {
+                setActiveTab('labReports');
+                loadLabReports();
+              }}
+              className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                activeTab === 'labReports'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Lab Reports ({labReports.length})
+            </button>
           </nav>
         </div>
 
@@ -728,6 +764,7 @@ export default function AdminDashboard() {
                         <div className="space-y-2">
                           {unassignedPatients.map((patient) => {
                             const patientDiagnostics = diagnostics.filter(d => d.patientId === patient.id);
+                            const patientLabReports = allLabReports.filter(lr => lr.patientId === patient.id);
                             const isPatientExpanded = expandedPatients.has(patient.id);
 
                             return (
@@ -754,50 +791,116 @@ export default function AdminDashboard() {
                                       <p className="text-xs text-gray-500 mt-0.5">Blood Group: <span className="font-medium">{patient.bloodGroup || 'Not specified'}</span></p>
                                     </div>
                                   </div>
-                                  <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
-                                    {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diag' : 'diags'}
-                                  </span>
+                                  <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                                    <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
+                                      {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diag' : 'diags'}
+                                    </span>
+                                    <span className="text-xs bg-purple-200 text-purple-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
+                                      {patientLabReports.length} {patientLabReports.length === 1 ? 'report' : 'reports'}
+                                    </span>
+                                  </div>
                                 </div>
 
                                 {isPatientExpanded && (
-                                  <div className="pl-6 pr-2 py-2 bg-white">
-                                    {patientDiagnostics.length === 0 ? (
-                                      <div className="text-xs text-gray-500 py-1">No diagnostic records</div>
-                                    ) : (
-                                      <div className="space-y-1">
-                                        {patientDiagnostics.map((diagnostic) => (
-                                          <div
-                                            key={diagnostic.id}
-                                            className="p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200"
-                                          >
-                                            <div className="flex items-start justify-between">
-                                              <div className="flex-1">
-                                                <p className="text-xs font-medium text-gray-900">
-                                                  {diagnostic.diagnosis}
-                                                </p>
-                                                <p className="text-xs text-gray-600 mt-1">
-                                                  {new Date(diagnostic.date).toLocaleDateString()}
-                                                </p>
-                                                {diagnostic.symptoms && (
-                                                  <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-                                                    Symptoms: {diagnostic.symptoms}
+                                  <div className="pl-6 pr-2 py-2 bg-white space-y-3">
+                                    {/* Diagnostics */}
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-700 mb-1">Diagnostics</p>
+                                      {patientDiagnostics.length === 0 ? (
+                                        <div className="text-xs text-gray-500 py-1">No diagnostic records</div>
+                                      ) : (
+                                        <div className="space-y-1">
+                                          {patientDiagnostics.map((diagnostic) => (
+                                            <div
+                                              key={diagnostic.id}
+                                              className="p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200"
+                                            >
+                                              <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                  <p className="text-xs font-medium text-gray-900">
+                                                    {diagnostic.diagnosis}
                                                   </p>
-                                                )}
+                                                  <p className="text-xs text-gray-600 mt-1">
+                                                    {new Date(diagnostic.date).toLocaleDateString()}
+                                                  </p>
+                                                  {diagnostic.symptoms && (
+                                                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                                                      Symptoms: {diagnostic.symptoms}
+                                                    </p>
+                                                  )}
+                                                </div>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteDiagnostic(diagnostic.id);
+                                                  }}
+                                                  className="ml-2 text-red-600 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
+                                                >
+                                                  Delete
+                                                </button>
                                               </div>
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  handleDeleteDiagnostic(diagnostic.id);
-                                                }}
-                                                className="ml-2 text-red-600 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
-                                              >
-                                                Delete
-                                              </button>
                                             </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Lab Reports */}
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-700 mb-1">Lab Reports</p>
+                                      {patientLabReports.length === 0 ? (
+                                        <div className="text-xs text-gray-500 py-1">No lab reports</div>
+                                      ) : (
+                                        <div className="space-y-1">
+                                          {patientLabReports.map((report) => (
+                                            <div
+                                              key={report.id}
+                                              className="p-2 bg-purple-50 hover:bg-purple-100 rounded border border-purple-200"
+                                            >
+                                              <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                  <p className="text-xs font-medium text-gray-900">
+                                                    {report.description || 'Lab Report'}
+                                                  </p>
+                                                  <p className="text-xs text-gray-600 mt-1">
+                                                    {new Date(report.createdAt).toLocaleDateString()}
+                                                  </p>
+                                                  {report.doctorName && (
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                      Doctor: {report.doctorName}
+                                                    </p>
+                                                  )}
+                                                </div>
+                                                <div className="flex items-center space-x-1 ml-2">
+                                                  <a
+                                                    href={`/api/lab-reports/download?id=${report.id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-green-600 hover:text-green-700 text-xs px-2 py-1 rounded hover:bg-green-50"
+                                                  >
+                                                    View
+                                                  </a>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      openPasswordModal('Delete Lab Report', async (password) => {
+                                                        await deleteLabReport(report.id, password);
+                                                        toast.success('Lab report deleted successfully!');
+                                                        await loadAllData();
+                                                      });
+                                                    }}
+                                                    className="text-red-600 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
+                                                  >
+                                                    Delete
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -902,6 +1005,7 @@ export default function AdminDashboard() {
                             ) : (
                                 doctorPatients.map((patient) => {
                                   const patientDiagnostics = diagnostics.filter(d => d.patientId === patient.id);
+                                  const patientLabReports = allLabReports.filter(lr => lr.patientId === patient.id);
                                   const isPatientExpanded = expandedPatients.has(patient.id);
 
                                   return (
@@ -929,51 +1033,117 @@ export default function AdminDashboard() {
                                             <p className="text-xs text-gray-500 mt-0.5">Blood Group: <span className="font-medium">{patient.bloodGroup || 'Not specified'}</span></p>
                                           </div>
                                         </div>
-                                        <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0">
-                                          {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diag' : 'diags'}
-                                        </span>
+                                        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                                          <span className="text-xs bg-blue-200 text-blue-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
+                                            {patientDiagnostics.length} {patientDiagnostics.length === 1 ? 'diag' : 'diags'}
+                                          </span>
+                                          <span className="text-xs bg-purple-200 text-purple-800 px-1.5 sm:px-2 py-1 rounded-full whitespace-nowrap">
+                                            {patientLabReports.length} {patientLabReports.length === 1 ? 'report' : 'reports'}
+                                          </span>
+                                        </div>
                                       </div>
 
-                                      {/* Diagnostics under Patient */}
+                                      {/* Diagnostics and Lab Reports under Patient */}
                                       {isPatientExpanded && (
-                                        <div className="pl-6 pr-2 py-2 bg-white">
-                                          {patientDiagnostics.length === 0 ? (
-                                            <div className="text-xs text-gray-500 py-1">No diagnostic records</div>
-                                          ) : (
-                                            <div className="space-y-1">
-                                              {patientDiagnostics.map((diagnostic) => (
-                                                <div
-                                                  key={diagnostic.id}
-                                                  className="p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200"
-                                                >
-                                                  <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                      <p className="text-xs font-medium text-gray-900">
-                                                        {diagnostic.diagnosis}
-                                                      </p>
-                                                      <p className="text-xs text-gray-600 mt-1">
-                                                        {new Date(diagnostic.date).toLocaleDateString()}
-                                                      </p>
-                                                      {diagnostic.symptoms && (
-                                                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-                                                          Symptoms: {diagnostic.symptoms}
+                                        <div className="pl-6 pr-2 py-2 bg-white space-y-3">
+                                          {/* Diagnostics */}
+                                          <div>
+                                            <p className="text-xs font-semibold text-gray-700 mb-1">Diagnostics</p>
+                                            {patientDiagnostics.length === 0 ? (
+                                              <div className="text-xs text-gray-500 py-1">No diagnostic records</div>
+                                            ) : (
+                                              <div className="space-y-1">
+                                                {patientDiagnostics.map((diagnostic) => (
+                                                  <div
+                                                    key={diagnostic.id}
+                                                    className="p-2 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200"
+                                                  >
+                                                    <div className="flex items-start justify-between">
+                                                      <div className="flex-1">
+                                                        <p className="text-xs font-medium text-gray-900">
+                                                          {diagnostic.diagnosis}
                                                         </p>
-                                                      )}
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                          {new Date(diagnostic.date).toLocaleDateString()}
+                                                        </p>
+                                                        {diagnostic.symptoms && (
+                                                          <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                                                            Symptoms: {diagnostic.symptoms}
+                                                          </p>
+                                                        )}
+                                                      </div>
+                                                      <button
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleDeleteDiagnostic(diagnostic.id);
+                                                        }}
+                                                        className="ml-2 text-red-600 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
+                                                      >
+                                                        Delete
+                                                      </button>
                                                     </div>
-                                                    <button
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteDiagnostic(diagnostic.id);
-                                                      }}
-                                                      className="ml-2 text-red-600 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
-                                                    >
-                                                      Delete
-                                                    </button>
                                                   </div>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Lab Reports */}
+                                          <div>
+                                            <p className="text-xs font-semibold text-gray-700 mb-1">Lab Reports</p>
+                                            {patientLabReports.length === 0 ? (
+                                              <div className="text-xs text-gray-500 py-1">No lab reports</div>
+                                            ) : (
+                                              <div className="space-y-1">
+                                                {patientLabReports.map((report) => (
+                                                  <div
+                                                    key={report.id}
+                                                    className="p-2 bg-purple-50 hover:bg-purple-100 rounded border border-purple-200"
+                                                  >
+                                                    <div className="flex items-start justify-between">
+                                                      <div className="flex-1">
+                                                        <p className="text-xs font-medium text-gray-900">
+                                                          {report.description || 'Lab Report'}
+                                                        </p>
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                          {new Date(report.createdAt).toLocaleDateString()}
+                                                        </p>
+                                                        {report.doctorName && (
+                                                          <p className="text-xs text-gray-500 mt-1">
+                                                            Doctor: {report.doctorName}
+                                                          </p>
+                                                        )}
+                                                      </div>
+                                                      <div className="flex items-center space-x-1 ml-2">
+                                                        <a
+                                                          href={`/api/lab-reports/download?id=${report.id}`}
+                                                          target="_blank"
+                                                          rel="noopener noreferrer"
+                                                          onClick={(e) => e.stopPropagation()}
+                                                          className="text-green-600 hover:text-green-700 text-xs px-2 py-1 rounded hover:bg-green-50"
+                                                        >
+                                                          View
+                                                        </a>
+                                                        <button
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openPasswordModal('Delete Lab Report', async (password) => {
+                                                              await deleteLabReport(report.id, password);
+                                                              toast.success('Lab report deleted successfully!');
+                                                              await loadAllData();
+                                                            });
+                                                          }}
+                                                          className="text-red-600 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
+                                                        >
+                                                          Delete
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
                                       )}
                                     </div>
@@ -1265,6 +1435,228 @@ export default function AdminDashboard() {
                   </>
                 );
               })()}
+            </div>
+          </div>
+        )}
+
+        {/* Lab Reports Tab */}
+        {activeTab === 'labReports' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">All Lab Reports</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  View and download lab reports. Search by doctor name, patient name, or UHID.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
+                <input
+                  type="text"
+                  value={labReportSearch}
+                  onChange={(e) => setLabReportSearch(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      loadLabReports(labReportSearch);
+                    }
+                  }}
+                  placeholder="Search by doctor/patient name or UHID..."
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm w-full sm:w-64"
+                />
+                <button
+                  onClick={() => loadLabReports(labReportSearch)}
+                  disabled={labReportLoading}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {labReportLoading ? 'Searching...' : 'Search'}
+                </button>
+                {labReportSearch && (
+                  <button
+                    onClick={() => {
+                      setLabReportSearch('');
+                      loadLabReports('');
+                    }}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="px-4 sm:px-6 py-4">
+              {labReportLoading ? (
+                <p className="text-sm text-gray-500">Loading lab reports...</p>
+              ) : labReports.length === 0 ? (
+                <p className="text-sm text-gray-500">No lab reports found.</p>
+              ) : (
+                <>
+                  {/* Mobile Card View */}
+                  <div className="block md:hidden space-y-4">
+                    {labReports.map((report) => (
+                      <div
+                        key={report.id}
+                        className="border border-gray-200 rounded-lg bg-white p-4 space-y-3 overflow-hidden"
+                      >
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                            Patient
+                          </p>
+                          <p className="text-sm font-semibold text-gray-900 break-words">
+                            {report.patient?.name || 'Unknown'}
+                          </p>
+                          {report.patient?.uhid && (
+                            <p className="text-xs text-gray-500">UHID: {report.patient.uhid}</p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                            Doctor
+                          </p>
+                          <p className="text-sm font-semibold text-gray-900 break-words">
+                            {report.doctor?.name || 'Unknown'}
+                          </p>
+                          {report.doctor?.uhid && (
+                            <p className="text-xs text-gray-500">UHID: {report.doctor.uhid}</p>
+                          )}
+                        </div>
+                        {report.description && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                              Description
+                            </p>
+                            <p className="text-sm text-gray-600 break-words line-clamp-3">
+                              {report.description}
+                            </p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                            Date
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(report.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 pt-2 border-t border-gray-100">
+                          <a
+                            href={`/api/lab-reports/download?id=${report.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium text-center"
+                          >
+                            View
+                          </a>
+                          <a
+                            href={`/api/lab-reports/download?id=${report.id}`}
+                            download
+                            className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium text-center"
+                          >
+                            Download
+                          </a>
+                          <button
+                            onClick={() =>
+                              openPasswordModal('Delete Lab Report', async (password) => {
+                                await deleteLabReport(report.id, password);
+                                toast.success('Lab report deleted successfully!');
+                                await loadLabReports(labReportSearch);
+                              })
+                            }
+                            className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Patient
+                          </th>
+                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Doctor
+                          </th>
+                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Description
+                          </th>
+                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date
+                          </th>
+                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {labReports.map((report) => (
+                          <tr key={report.id} className="hover:bg-gray-50">
+                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {report.patient?.name || 'Unknown'}
+                              </div>
+                              {report.patient?.uhid && (
+                                <div className="text-xs text-gray-500">UHID: {report.patient.uhid}</div>
+                              )}
+                            </td>
+                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {report.doctor?.name || 'Unknown'}
+                              </div>
+                              {report.doctor?.uhid && (
+                                <div className="text-xs text-gray-500">UHID: {report.doctor.uhid}</div>
+                              )}
+                            </td>
+                            <td className="px-4 lg:px-6 py-4">
+                              <div className="text-sm text-gray-600 max-w-xs truncate">
+                                {report.description || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(report.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex gap-2">
+                                <a
+                                  href={`/api/lab-reports/download?id=${report.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-green-600 hover:text-green-700 px-2 py-1 rounded hover:bg-green-50"
+                                >
+                                  View
+                                </a>
+                                <a
+                                  href={`/api/lab-reports/download?id=${report.id}`}
+                                  download
+                                  className="text-blue-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-50"
+                                >
+                                  Download
+                                </a>
+                                <button
+                                  onClick={() =>
+                                    openPasswordModal('Delete Lab Report', async (password) => {
+                                      await deleteLabReport(report.id, password);
+                                      toast.success('Lab report deleted successfully!');
+                                      await loadLabReports(labReportSearch);
+                                    })
+                                  }
+                                  className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 text-xs sm:text-sm"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

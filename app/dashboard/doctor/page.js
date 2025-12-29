@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { getCurrentUser, getPatients, addPatient, addDiagnostic, getDiagnostics, deletePatient, logout, exportToPDF, exportToExcel, getUnassignedPatients, assignPatient, updateProfilePic, uploadImage, updatePatient, resendVerificationEmail, getCertificates, addCertificate, updateCertificateVisibility, deleteCertificate } from '@/lib/api';
+import { getCurrentUser, getPatients, addPatient, addDiagnostic, getDiagnostics, deletePatient, logout, exportToPDF, exportToExcel, getUnassignedPatients, assignPatient, updateProfilePic, uploadImage, updatePatient, resendVerificationEmail, getCertificates, addCertificate, updateCertificateVisibility, deleteCertificate, getLabReports, addLabReport, deleteLabReport } from '@/lib/api';
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -23,11 +23,12 @@ export default function DoctorDashboard() {
   const [resendingVerification, setResendingVerification] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState(null);
   
-  // Password modal state for patient deletion
+  // Password modal state for patient deletion and other operations
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalCallback, setPasswordModalCallback] = useState(null);
   const [passwordModalTitle, setPasswordModalTitle] = useState('');
   const [passwordModalPatientName, setPasswordModalPatientName] = useState('');
+  const [passwordModalMessage, setPasswordModalMessage] = useState(null); // Custom message, null = use default patient deletion message
   const [passwordInput, setPasswordInput] = useState('');
   const [deleting, setDeleting] = useState(false);
 
@@ -41,6 +42,20 @@ export default function DoctorDashboard() {
     isPublic: false,
   });
   const [certUploading, setCertUploading] = useState(false);
+
+  // Lab Reports
+  const [labReports, setLabReports] = useState([]);
+  const [labReportLoading, setLabReportLoading] = useState(false);
+  const [showAddLabReport, setShowAddLabReport] = useState(false);
+  const [selectedPatientForLabReport, setSelectedPatientForLabReport] = useState(null);
+  const [labReportForm, setLabReportForm] = useState({
+    patientId: '',
+    description: '',
+    fileUrl: '',
+  });
+  const [labReportUploading, setLabReportUploading] = useState(false);
+  const [showLabReportPasswordModal, setShowLabReportPasswordModal] = useState(false);
+  const [labReportPassword, setLabReportPassword] = useState('');
 
   const [patientForm, setPatientForm] = useState({
     name: '',
@@ -116,6 +131,139 @@ export default function DoctorDashboard() {
     }
   };
 
+  const loadLabReports = async (patientId = null) => {
+    try {
+      setLabReportLoading(true);
+      const data = await getLabReports(patientId);
+      setLabReports(data.labReports || []);
+    } catch (error) {
+      console.error('Error loading lab reports:', error);
+    } finally {
+      setLabReportLoading(false);
+    }
+  };
+
+  const handleLabReportFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type (PDF or image)
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a PDF or image file (JPG/PNG)');
+      e.target.value = '';
+      return;
+    }
+
+    setLabReportUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed');
+      }
+      
+      setLabReportForm((prev) => ({
+        ...prev,
+        fileUrl: result.url,
+      }));
+      toast.success('Lab report file uploaded successfully!');
+      e.target.value = '';
+    } catch (err) {
+      toast.error('Failed to upload lab report file: ' + (err.message || 'Please check your Cloudinary configuration'));
+      e.target.value = '';
+    } finally {
+      setLabReportUploading(false);
+    }
+  };
+
+  const handleAddLabReport = async (e) => {
+    e.preventDefault();
+    if (!labReportForm.patientId || !labReportForm.fileUrl || !labReportPassword) {
+      toast.error('Please fill all required fields and enter your password');
+      return;
+    }
+
+    try {
+      const response = await addLabReport(
+        labReportForm.patientId,
+        labReportForm.fileUrl,
+        labReportForm.description,
+        labReportPassword
+      );
+      if (response.success) {
+        toast.success('Lab report added successfully!');
+        setLabReportForm({
+          patientId: '',
+          description: '',
+          fileUrl: '',
+        });
+        setLabReportPassword('');
+        setShowLabReportPasswordModal(false);
+        setShowAddLabReport(false);
+        setSelectedPatientForLabReport(null);
+        await loadLabReports();
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'An error occurred';
+      if (errorMessage.includes('Invalid password') || errorMessage.includes('Password is required')) {
+        toast.error(errorMessage);
+      } else {
+        toast.error('Error adding lab report: ' + errorMessage);
+      }
+    }
+  };
+
+  const handleDeleteLabReport = (report) => {
+    const reportId = report.id;
+    const reportName = report.patient?.name || 'Lab Report';
+    const customMessage = (
+      <>
+        <p className="text-sm text-gray-700">
+          Are you sure you want to delete the lab report for patient <strong>"{reportName}"</strong>?
+        </p>
+        <p className="text-xs text-gray-600 mt-2">
+          This will permanently delete:
+        </p>
+        <ul className="text-xs text-gray-600 mt-1 ml-4 list-disc">
+          <li>Lab report file</li>
+          <li>All associated data</li>
+        </ul>
+        <p className="text-xs text-red-600 mt-2 font-semibold">This action cannot be undone.</p>
+      </>
+    );
+    
+    openPasswordModal(
+      'Delete Lab Report',
+      reportName,
+      async (password) => {
+        try {
+          const response = await deleteLabReport(reportId, password);
+          if (response.success) {
+            toast.success('Lab report deleted successfully!');
+            await loadLabReports();
+          }
+        } catch (error) {
+          const errorMessage = error.message || 'An error occurred';
+          if (errorMessage.includes('Invalid password') || errorMessage.includes('Password is required')) {
+            toast.error(errorMessage);
+          } else {
+            toast.error('Error deleting lab report: ' + errorMessage);
+          }
+          throw error; // Re-throw to keep modal open
+        }
+      },
+      customMessage
+    );
+  };
+
   const handleAssignPatient = async (patientId) => {
     try {
       await assignPatient(patientId);
@@ -158,6 +306,7 @@ export default function DoctorDashboard() {
       await loadPatients();
       await loadUnassignedPatients();
       await loadCertificates();
+      await loadLabReports();
       setLoading(false);
     }
     loadData();
@@ -372,9 +521,10 @@ export default function DoctorDashboard() {
     }
   };
 
-  const openPasswordModal = (title, patientName, callback) => {
+  const openPasswordModal = (title, patientName, callback, customMessage = null) => {
     setPasswordModalTitle(title);
     setPasswordModalPatientName(patientName);
+    setPasswordModalMessage(customMessage);
     setPasswordModalCallback(() => callback);
     setShowPasswordModal(true);
     setPasswordInput('');
@@ -395,6 +545,7 @@ export default function DoctorDashboard() {
         setPasswordInput('');
         setPasswordModalCallback(null);
         setPasswordModalPatientName('');
+        setPasswordModalMessage(null);
       }
     } catch (error) {
       // Don't close modal on error, let user try again
@@ -629,6 +780,16 @@ export default function DoctorDashboard() {
                       Add Diagnostic
                     </button>
                     <button
+                      onClick={() => {
+                        setSelectedPatientForLabReport(patient);
+                        setLabReportForm({ ...labReportForm, patientId: patient._id || patient.id });
+                        setShowAddLabReport(true);
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-50 border border-blue-200"
+                    >
+                      Add Lab Report
+                    </button>
+                    <button
                       onClick={() => exportToPDF(patient._id || patient.id)}
                       className="text-xs text-green-600 hover:text-green-700 px-2 py-1 rounded hover:bg-green-50 border border-green-200"
                     >
@@ -691,6 +852,16 @@ export default function DoctorDashboard() {
                             className="text-green-600 hover:text-green-700 px-2 py-1 rounded hover:bg-green-50 text-xs sm:text-sm"
                           >
                             Add Diagnostic
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedPatientForLabReport(patient);
+                              setLabReportForm({ ...labReportForm, patientId: patient._id || patient.id });
+                              setShowAddLabReport(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-50 text-xs sm:text-sm"
+                          >
+                            Add Lab Report
                           </button>
                           <button
                             onClick={() => exportToPDF(patient._id || patient.id)}
@@ -936,6 +1107,82 @@ export default function DoctorDashboard() {
                         <button
                           onClick={() => handleDeleteCertificate(cert.id)}
                           className="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Lab Reports Section */}
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Lab Reports</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                View and manage lab reports for your patients.
+              </p>
+            </div>
+          </div>
+
+          <div className="px-4 sm:px-6 py-4">
+            {labReportLoading ? (
+              <p className="text-sm text-gray-500">Loading lab reports...</p>
+            ) : labReports.length === 0 ? (
+              <p className="text-sm text-gray-500">No lab reports found.</p>
+            ) : (
+              <div className="space-y-4">
+                {labReports.map((report) => (
+                  <div
+                    key={report.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-sm font-semibold text-gray-900">
+                            Patient: {report.patient?.name || 'Unknown'}
+                          </h3>
+                          {report.patient?.uhid && (
+                            <span className="text-xs text-gray-500">(UHID: {report.patient.uhid})</span>
+                          )}
+                        </div>
+                        {report.description && (
+                          <p className="text-sm text-gray-600 mb-2">{report.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                          <span>
+                            Date: {new Date(report.createdAt).toLocaleDateString()}
+                          </span>
+                          {report.doctor?.uhid && (
+                            <span>Doctor UHID: {report.doctor.uhid}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <a
+                          href={`/api/lab-reports/download?id=${report.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                        >
+                          View
+                        </a>
+                        <a
+                          href={`/api/lab-reports/download?id=${report.id}`}
+                          download
+                          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                        >
+                          Download
+                        </a>
+                        <button
+                          onClick={() => handleDeleteLabReport(report)}
+                          className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
                         >
                           Delete
                         </button>
@@ -1484,6 +1731,132 @@ export default function DoctorDashboard() {
         </div>
       )}
 
+      {/* Add Lab Report Modal */}
+      {showAddLabReport && selectedPatientForLabReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                Add Lab Report - {selectedPatientForLabReport.name}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAddLabReport(false);
+                  setSelectedPatientForLabReport(null);
+                  setLabReportForm({ patientId: '', description: '', fileUrl: '' });
+                  setLabReportPassword('');
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleAddLabReport} className="p-4 sm:p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                <textarea
+                  value={labReportForm.description}
+                  onChange={(e) => setLabReportForm({ ...labReportForm, description: e.target.value })}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  placeholder="Enter description or notes about the lab report"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Upload Lab Report File (PDF or Image) *
+                </label>
+                <input
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/jpg,image/png"
+                  onChange={handleLabReportFileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  disabled={labReportUploading}
+                  id="lab-report-file-input"
+                  style={{ display: 'none' }}
+                />
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.getElementById('lab-report-file-input');
+                      if (input) {
+                        // Remove capture attribute to allow gallery selection
+                        input.removeAttribute('capture');
+                        input.click();
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                    disabled={labReportUploading}
+                  >
+                    📁 Choose from Gallery
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.getElementById('lab-report-file-input');
+                      if (input) {
+                        // Add capture attribute to open camera
+                        input.setAttribute('capture', 'environment');
+                        input.click();
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm font-medium"
+                    disabled={labReportUploading}
+                  >
+                    📷 Take Photo
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Choose from gallery or take a new photo. Supported formats: PDF, JPG, PNG
+                </p>
+                {labReportUploading && <p className="mt-2 text-sm text-gray-500">Uploading file...</p>}
+                {labReportForm.fileUrl && (
+                  <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                    <p className="text-sm text-green-700">✓ File uploaded successfully</p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Enter Your Password *</label>
+                <input
+                  type="password"
+                  value={labReportPassword}
+                  onChange={(e) => setLabReportPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  placeholder="Enter your password to confirm"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Password required to add lab report
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddLabReport(false);
+                    setSelectedPatientForLabReport(null);
+                    setLabReportForm({ patientId: '', description: '', fileUrl: '' });
+                    setLabReportPassword('');
+                  }}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors w-full sm:w-auto"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={labReportUploading || !labReportForm.fileUrl}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {labReportUploading ? 'Uploading...' : 'Add Lab Report'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Certificate View Modal */}
       {viewingCertificate && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
@@ -1562,33 +1935,40 @@ export default function DoctorDashboard() {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{passwordModalTitle}</h3>
               <button
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  setPasswordInput('');
-                  setPasswordModalCallback(null);
-                  setPasswordModalPatientName('');
-                }}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-                disabled={deleting}
-              >
-                ✕
-              </button>
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setPasswordInput('');
+                    setPasswordModalCallback(null);
+                    setPasswordModalPatientName('');
+                    setPasswordModalMessage(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                  disabled={deleting}
+                >
+                  ✕
+                </button>
             </div>
             <div className="space-y-4">
               {passwordModalPatientName && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-gray-700">
-                    <span className="font-semibold text-red-700">Warning:</span> You are about to delete patient <span className="font-semibold">"{passwordModalPatientName}"</span>
-                  </p>
-                  <p className="text-xs text-gray-600 mt-2">
-                    This will permanently delete:
-                  </p>
-                  <ul className="text-xs text-gray-600 mt-1 ml-4 list-disc">
-                    <li>Patient record</li>
-                    <li>All diagnostic records</li>
-                    <li>Patient user account</li>
-                  </ul>
-                  <p className="text-xs text-red-600 mt-2 font-semibold">This action cannot be undone.</p>
+                  {passwordModalMessage ? (
+                    passwordModalMessage
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-700">
+                        <span className="font-semibold text-red-700">Warning:</span> You are about to delete patient <span className="font-semibold">"{passwordModalPatientName}"</span>
+                      </p>
+                      <p className="text-xs text-gray-600 mt-2">
+                        This will permanently delete:
+                      </p>
+                      <ul className="text-xs text-gray-600 mt-1 ml-4 list-disc">
+                        <li>Patient record</li>
+                        <li>All diagnostic records</li>
+                        <li>Patient user account</li>
+                      </ul>
+                      <p className="text-xs text-red-600 mt-2 font-semibold">This action cannot be undone.</p>
+                    </>
+                  )}
                 </div>
               )}
               <div>
@@ -1617,6 +1997,7 @@ export default function DoctorDashboard() {
                     setPasswordInput('');
                     setPasswordModalCallback(null);
                     setPasswordModalPatientName('');
+                    setPasswordModalMessage(null);
                   }}
                   className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
                   disabled={deleting}
