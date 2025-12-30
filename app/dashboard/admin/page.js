@@ -679,6 +679,7 @@ export default function AdminDashboard() {
                       </th>
                     <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                     <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
                       <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blood Group</th>
                     <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
@@ -689,7 +690,7 @@ export default function AdminDashboard() {
                 <tbody className="bg-white divide-y divide-gray-200">
                     {filteredPatients.length === 0 ? (
                     <tr>
-                        <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
                         No patients found.
                       </td>
                     </tr>
@@ -706,6 +707,7 @@ export default function AdminDashboard() {
                           </td>
                         <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
                         <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.gender || 'N/A'}</td>
                           <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">{patient.bloodGroup || 'Not specified'}</td>
                         <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.email}</td>
                         <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.currentDoctor || 'Unassigned'}</td>
@@ -788,7 +790,12 @@ export default function AdminDashboard() {
                                     <div className="min-w-0 flex-1">
                                       <h4 className="font-medium text-gray-900 text-sm truncate">{patient.name}</h4>
                                       <p className="text-xs text-gray-600 truncate">{patient.email}</p>
-                                      <p className="text-xs text-gray-500 mt-0.5">Blood Group: <span className="font-medium">{patient.bloodGroup || 'Not specified'}</span></p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        {patient.gender && (
+                                          <p className="text-xs text-gray-500">Gender: <span className="font-medium">{patient.gender}</span></p>
+                                        )}
+                                        <p className="text-xs text-gray-500">Blood Group: <span className="font-medium">{patient.bloodGroup || 'Not specified'}</span></p>
+                                      </div>
                                     </div>
                                   </div>
                                   <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
@@ -803,6 +810,37 @@ export default function AdminDashboard() {
 
                                 {isPatientExpanded && (
                                   <div className="pl-6 pr-2 py-2 bg-white space-y-3">
+                                    {/* Medical Information */}
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-700 mb-1">Medical Information</p>
+                                      <div className="space-y-1 text-xs">
+                                        {patient.gender && (
+                                          <p className="text-gray-600"><span className="font-medium">Gender:</span> {patient.gender}</p>
+                                        )}
+                                        {patient.dateOfAdmission && (
+                                          <p className="text-gray-600"><span className="font-medium">Date of Admission:</span> {patient.dateOfAdmission}</p>
+                                        )}
+                                        {patient.cc && (
+                                          <p className="text-gray-600"><span className="font-medium">CC:</span> {patient.cc}</p>
+                                        )}
+                                        {patient.historyOfPresentIllness && (
+                                          <p className="text-gray-600"><span className="font-medium">History of Present Illness:</span> {patient.historyOfPresentIllness.substring(0, 100)}{patient.historyOfPresentIllness.length > 100 ? '...' : ''}</p>
+                                        )}
+                                        {patient.diagnosis && (
+                                          <p className="text-gray-600"><span className="font-medium">Diagnosis:</span> {patient.diagnosis.substring(0, 100)}{patient.diagnosis.length > 100 ? '...' : ''}</p>
+                                        )}
+                                        {patient.provisionalDiagnosis && (
+                                          <p className="text-gray-600"><span className="font-medium">Provisional Diagnosis:</span> {patient.provisionalDiagnosis.substring(0, 100)}{patient.provisionalDiagnosis.length > 100 ? '...' : ''}</p>
+                                        )}
+                                        {patient.shortTermTreatment && (
+                                          <p className="text-gray-600"><span className="font-medium">Short Term Treatment:</span> {patient.shortTermTreatment.substring(0, 100)}{patient.shortTermTreatment.length > 100 ? '...' : ''}</p>
+                                        )}
+                                        {patient.longTermTreatment && (
+                                          <p className="text-gray-600"><span className="font-medium">Long Term Treatment:</span> {patient.longTermTreatment.substring(0, 100)}{patient.longTermTreatment.length > 100 ? '...' : ''}</p>
+                                        )}
+                                      </div>
+                                    </div>
+
                                     {/* Diagnostics */}
                                     <div>
                                       <p className="text-xs font-semibold text-gray-700 mb-1">Diagnostics</p>

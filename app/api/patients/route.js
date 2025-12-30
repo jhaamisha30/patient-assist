@@ -81,9 +81,53 @@ export async function POST(request) {
       email,
       password,
       bloodGroup,
+      // Basic details
       gender,
-      phone,
       address,
+      dateOfAdmission,
+      cc,
+      historyOfPresentIllness,
+      phone,
+      // History
+      past,
+      surgical,
+      medical,
+      // Pain assessment
+      onset,
+      duration,
+      typeBehaviour,
+      aAndR,
+      intensity,
+      // Observation
+      bodyBuilt,
+      gait,
+      attitudeOfLimb,
+      posture,
+      // Local observation
+      skinTexture,
+      skinColor,
+      atrophy,
+      swellingDeformity,
+      // Palpation
+      tenderness,
+      temp,
+      warmth,
+      edema,
+      crepitus,
+      scar,
+      muscleTightness,
+      // Examination
+      rom,
+      lld,
+      dermatomesAndMyotomes,
+      // Investigation, Special test, Diagnosis, Treatment
+      investigation,
+      specialTest,
+      provisionalDiagnosis,
+      diagnosis,
+      shortTermTreatment,
+      longTermTreatment,
+      // Legacy fields
       medicalHistory,
       allergies,
       currentMedications,
@@ -105,8 +149,8 @@ export async function POST(request) {
       );
     }
 
-    // Validate blood group format
-    const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    // Validate blood group format (including 'unknown')
+    const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown'];
     if (!validBloodGroups.includes(bloodGroup)) {
       return NextResponse.json(
         { error: 'Invalid blood group' },
@@ -168,6 +212,18 @@ export async function POST(request) {
     // Generate UHID
     const uhid = generateUHID(name, patientId);
 
+    // Prepare vitals object
+    const patientVitals = vitals || {
+      bloodPressure: '',
+      heartRate: '',
+      temperature: '',
+      weight: '',
+      height: '',
+      bloodSugar: '',
+    };
+    const hasVitals = Object.values(patientVitals).some(v => v && v.trim() !== '');
+    const vitalsLastUpdated = hasVitals ? new Date() : null;
+
     // Create patient record
     const patient = {
       userId: patientUserId,
@@ -179,21 +235,58 @@ export async function POST(request) {
       age: parseInt(age),
       email,
       bloodGroup: bloodGroup,
+      // Basic details
       gender: gender || '',
-      phone: phone || '',
       address: address || '',
+      dateOfAdmission: dateOfAdmission || '',
+      cc: cc || '',
+      historyOfPresentIllness: historyOfPresentIllness || '',
+      phone: phone || '',
+      // History
+      past: past || '',
+      surgical: surgical || '',
+      medical: medical || '',
+      // Pain assessment
+      onset: onset || '',
+      duration: duration || '',
+      typeBehaviour: typeBehaviour || '',
+      aAndR: aAndR || '',
+      intensity: intensity || '',
+      // Observation
+      bodyBuilt: bodyBuilt || '',
+      gait: gait || '',
+      attitudeOfLimb: attitudeOfLimb || '',
+      posture: posture || '',
+      // Local observation
+      skinTexture: skinTexture || '',
+      skinColor: skinColor || '',
+      atrophy: atrophy || '',
+      swellingDeformity: swellingDeformity || '',
+      // Palpation
+      tenderness: tenderness || '',
+      temp: temp || '',
+      warmth: warmth || '',
+      edema: edema || '',
+      crepitus: crepitus || '',
+      scar: scar || '',
+      muscleTightness: muscleTightness || '',
+      // Examination
+      rom: rom || '',
+      lld: lld || '',
+      dermatomesAndMyotomes: dermatomesAndMyotomes || '',
+      // Investigation, Special test, Diagnosis, Treatment
+      investigation: investigation || '',
+      specialTest: specialTest || '',
+      provisionalDiagnosis: provisionalDiagnosis || '',
+      diagnosis: diagnosis || '',
+      shortTermTreatment: shortTermTreatment || '',
+      longTermTreatment: longTermTreatment || '',
+      // Legacy fields (keep for backward compatibility)
       medicalHistory: medicalHistory || '',
       allergies: allergies || '',
       currentMedications: currentMedications || '',
-      vitals: vitals || {
-        bloodPressure: '',
-        heartRate: '',
-        temperature: '',
-        weight: '',
-        height: '',
-        bloodSugar: '',
-      },
-      vitalsLastUpdated: new Date(),
+      vitals: patientVitals,
+      vitalsLastUpdated: vitalsLastUpdated,
       createdAt: new Date(),
     };
 

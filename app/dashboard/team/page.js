@@ -204,7 +204,7 @@ export default function OurTeam() {
                 Dr. Amisha Jha
               </h3>
               <p className="text-lg sm:text-xl text-green-600 font-semibold mb-4">
-                5th Year Physiotherapy Student
+                4th Year Physiotherapy Student
               </p>
               <p className="text-gray-600 mb-1">
                 <span className="font-semibold">Sharda University, Noida</span>

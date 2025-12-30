@@ -68,7 +68,25 @@ export async function PUT(request, { params }) {
     }
 
     const { id } = await params;
-    const { name, age, password, vitals } = await request.json();
+    const { 
+      name, age, password, vitals,
+      // Basic details
+      gender, address, dateOfAdmission, cc, historyOfPresentIllness, bloodGroup, phone,
+      // History
+      past, surgical, medical,
+      // Pain assessment
+      onset, duration, typeBehaviour, aAndR, intensity,
+      // Observation
+      bodyBuilt, gait, attitudeOfLimb, posture,
+      // Local observation
+      skinTexture, skinColor, atrophy, swellingDeformity,
+      // Palpation
+      tenderness, temp, warmth, edema, crepitus, scar, muscleTightness,
+      // Examination
+      rom, lld, dermatomesAndMyotomes,
+      // Investigation, Special test, Diagnosis, Treatment
+      investigation, specialTest, provisionalDiagnosis, diagnosis, shortTermTreatment, longTermTreatment
+    } = await request.json();
 
     const patientsCollection = await getPatientsCollection();
     const usersCollection = await getUsersCollection();
@@ -100,9 +118,60 @@ export async function PUT(request, { params }) {
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (age !== undefined) updateData.age = parseInt(age);
+    // Basic details
+    if (gender !== undefined) updateData.gender = gender;
+    if (address !== undefined) updateData.address = address;
+    if (dateOfAdmission !== undefined) updateData.dateOfAdmission = dateOfAdmission;
+    if (cc !== undefined) updateData.cc = cc;
+    if (historyOfPresentIllness !== undefined) updateData.historyOfPresentIllness = historyOfPresentIllness;
+    if (bloodGroup !== undefined) updateData.bloodGroup = bloodGroup;
+    if (phone !== undefined) updateData.phone = phone;
+    // History
+    if (past !== undefined) updateData.past = past;
+    if (surgical !== undefined) updateData.surgical = surgical;
+    if (medical !== undefined) updateData.medical = medical;
+    // Pain assessment
+    if (onset !== undefined) updateData.onset = onset;
+    if (duration !== undefined) updateData.duration = duration;
+    if (typeBehaviour !== undefined) updateData.typeBehaviour = typeBehaviour;
+    if (aAndR !== undefined) updateData.aAndR = aAndR;
+    if (intensity !== undefined) updateData.intensity = intensity;
+    // Observation
+    if (bodyBuilt !== undefined) updateData.bodyBuilt = bodyBuilt;
+    if (gait !== undefined) updateData.gait = gait;
+    if (attitudeOfLimb !== undefined) updateData.attitudeOfLimb = attitudeOfLimb;
+    if (posture !== undefined) updateData.posture = posture;
+    // Local observation
+    if (skinTexture !== undefined) updateData.skinTexture = skinTexture;
+    if (skinColor !== undefined) updateData.skinColor = skinColor;
+    if (atrophy !== undefined) updateData.atrophy = atrophy;
+    if (swellingDeformity !== undefined) updateData.swellingDeformity = swellingDeformity;
+    // Palpation
+    if (tenderness !== undefined) updateData.tenderness = tenderness;
+    if (temp !== undefined) updateData.temp = temp;
+    if (warmth !== undefined) updateData.warmth = warmth;
+    if (edema !== undefined) updateData.edema = edema;
+    if (crepitus !== undefined) updateData.crepitus = crepitus;
+    if (scar !== undefined) updateData.scar = scar;
+    if (muscleTightness !== undefined) updateData.muscleTightness = muscleTightness;
+    // Examination
+    if (rom !== undefined) updateData.rom = rom;
+    if (lld !== undefined) updateData.lld = lld;
+    if (dermatomesAndMyotomes !== undefined) updateData.dermatomesAndMyotomes = dermatomesAndMyotomes;
+    // Investigation, Special test, Diagnosis, Treatment
+    if (investigation !== undefined) updateData.investigation = investigation;
+    if (specialTest !== undefined) updateData.specialTest = specialTest;
+    if (provisionalDiagnosis !== undefined) updateData.provisionalDiagnosis = provisionalDiagnosis;
+    if (diagnosis !== undefined) updateData.diagnosis = diagnosis;
+    if (shortTermTreatment !== undefined) updateData.shortTermTreatment = shortTermTreatment;
+    if (longTermTreatment !== undefined) updateData.longTermTreatment = longTermTreatment;
+    // Vitals
     if (vitals !== undefined) {
       updateData.vitals = vitals;
-      updateData.vitalsLastUpdated = new Date();
+      const hasVitals = Object.values(vitals).some(v => v && v.trim() !== '');
+      if (hasVitals) {
+        updateData.vitalsLastUpdated = new Date();
+      }
     }
 
     if (Object.keys(updateData).length > 0) {

@@ -62,13 +62,58 @@ export default function DoctorDashboard() {
     age: '',
     email: '',
     password: '',
-    bloodGroup: '',
+    // Basic details
     gender: '',
-    phone: '',
     address: '',
+    dateOfAdmission: '',
+    cc: '',
+    historyOfPresentIllness: '',
+    bloodGroup: '',
+    phone: '',
+    // History
+    past: '',
+    surgical: '',
+    medical: '',
+    // Pain assessment
+    onset: '',
+    duration: '',
+    typeBehaviour: '',
+    aAndR: '',
+    intensity: '',
+    // Observation
+    bodyBuilt: '',
+    gait: '',
+    attitudeOfLimb: '',
+    posture: '',
+    // Local observation
+    skinTexture: '',
+    skinColor: '',
+    atrophy: '',
+    swellingDeformity: '',
+    // Palpation
+    tenderness: '',
+    temp: '',
+    warmth: '',
+    edema: '',
+    crepitus: '',
+    scar: '',
+    muscleTightness: '',
+    // Examination
+    rom: '',
+    lld: '',
+    dermatomesAndMyotomes: '',
+    // Investigation, Special test, Diagnosis, Treatment
+    investigation: '',
+    specialTest: '',
+    provisionalDiagnosis: '',
+    diagnosis: '',
+    shortTermTreatment: '',
+    longTermTreatment: '',
+    // Legacy fields
     medicalHistory: '',
     allergies: '',
     currentMedications: '',
+    // Vitals
     vitals: {
       bloodPressure: '',
       heartRate: '',
@@ -83,6 +128,54 @@ export default function DoctorDashboard() {
     name: '',
     age: '',
     password: '',
+    // Basic details
+    gender: '',
+    address: '',
+    dateOfAdmission: '',
+    cc: '',
+    historyOfPresentIllness: '',
+    bloodGroup: '',
+    phone: '',
+    // History
+    past: '',
+    surgical: '',
+    medical: '',
+    // Pain assessment
+    onset: '',
+    duration: '',
+    typeBehaviour: '',
+    aAndR: '',
+    intensity: '',
+    // Observation
+    bodyBuilt: '',
+    gait: '',
+    attitudeOfLimb: '',
+    posture: '',
+    // Local observation
+    skinTexture: '',
+    skinColor: '',
+    atrophy: '',
+    swellingDeformity: '',
+    // Palpation
+    tenderness: '',
+    temp: '',
+    warmth: '',
+    edema: '',
+    crepitus: '',
+    scar: '',
+    muscleTightness: '',
+    // Examination
+    rom: '',
+    lld: '',
+    dermatomesAndMyotomes: '',
+    // Investigation, Special test, Diagnosis, Treatment
+    investigation: '',
+    specialTest: '',
+    provisionalDiagnosis: '',
+    diagnosis: '',
+    shortTermTreatment: '',
+    longTermTreatment: '',
+    // Vitals
     vitals: {
       bloodPressure: '',
       heartRate: '',
@@ -407,8 +500,44 @@ export default function DoctorDashboard() {
           email: '',
           password: '',
           gender: '',
-          phone: '',
           address: '',
+          dateOfAdmission: '',
+          cc: '',
+          historyOfPresentIllness: '',
+          bloodGroup: '',
+          phone: '',
+          past: '',
+          surgical: '',
+          medical: '',
+          onset: '',
+          duration: '',
+          typeBehaviour: '',
+          aAndR: '',
+          intensity: '',
+          bodyBuilt: '',
+          gait: '',
+          attitudeOfLimb: '',
+          posture: '',
+          skinTexture: '',
+          skinColor: '',
+          atrophy: '',
+          swellingDeformity: '',
+          tenderness: '',
+          temp: '',
+          warmth: '',
+          edema: '',
+          crepitus: '',
+          scar: '',
+          muscleTightness: '',
+          rom: '',
+          lld: '',
+          dermatomesAndMyotomes: '',
+          investigation: '',
+          specialTest: '',
+          provisionalDiagnosis: '',
+          diagnosis: '',
+          shortTermTreatment: '',
+          longTermTreatment: '',
           medicalHistory: '',
           allergies: '',
           currentMedications: '',
@@ -479,6 +608,54 @@ export default function DoctorDashboard() {
       name: patient.name || '',
       age: patient.age || '',
       password: '',
+      // Basic details
+      gender: patient.gender || '',
+      address: patient.address || '',
+      dateOfAdmission: patient.dateOfAdmission || '',
+      cc: patient.cc || '',
+      historyOfPresentIllness: patient.historyOfPresentIllness || '',
+      bloodGroup: patient.bloodGroup || '',
+      phone: patient.phone || '',
+      // History
+      past: patient.past || '',
+      surgical: patient.surgical || '',
+      medical: patient.medical || '',
+      // Pain assessment
+      onset: patient.onset || '',
+      duration: patient.duration || '',
+      typeBehaviour: patient.typeBehaviour || '',
+      aAndR: patient.aAndR || '',
+      intensity: patient.intensity || '',
+      // Observation
+      bodyBuilt: patient.bodyBuilt || '',
+      gait: patient.gait || '',
+      attitudeOfLimb: patient.attitudeOfLimb || '',
+      posture: patient.posture || '',
+      // Local observation
+      skinTexture: patient.skinTexture || '',
+      skinColor: patient.skinColor || '',
+      atrophy: patient.atrophy || '',
+      swellingDeformity: patient.swellingDeformity || '',
+      // Palpation
+      tenderness: patient.tenderness || '',
+      temp: patient.temp || '',
+      warmth: patient.warmth || '',
+      edema: patient.edema || '',
+      crepitus: patient.crepitus || '',
+      scar: patient.scar || '',
+      muscleTightness: patient.muscleTightness || '',
+      // Examination
+      rom: patient.rom || '',
+      lld: patient.lld || '',
+      dermatomesAndMyotomes: patient.dermatomesAndMyotomes || '',
+      // Investigation, Special test, Diagnosis, Treatment
+      investigation: patient.investigation || '',
+      specialTest: patient.specialTest || '',
+      provisionalDiagnosis: patient.provisionalDiagnosis || '',
+      diagnosis: patient.diagnosis || '',
+      shortTermTreatment: patient.shortTermTreatment || '',
+      longTermTreatment: patient.longTermTreatment || '',
+      // Vitals
       vitals: patient.vitals || {
         bloodPressure: '',
         heartRate: '',
@@ -501,6 +678,54 @@ export default function DoctorDashboard() {
       const updateData = {
         name: editPatientForm.name,
         age: editPatientForm.age,
+        // Basic details
+        gender: editPatientForm.gender,
+        address: editPatientForm.address,
+        dateOfAdmission: editPatientForm.dateOfAdmission,
+        cc: editPatientForm.cc,
+        historyOfPresentIllness: editPatientForm.historyOfPresentIllness,
+        bloodGroup: editPatientForm.bloodGroup,
+        phone: editPatientForm.phone,
+        // History
+        past: editPatientForm.past,
+        surgical: editPatientForm.surgical,
+        medical: editPatientForm.medical,
+        // Pain assessment
+        onset: editPatientForm.onset,
+        duration: editPatientForm.duration,
+        typeBehaviour: editPatientForm.typeBehaviour,
+        aAndR: editPatientForm.aAndR,
+        intensity: editPatientForm.intensity,
+        // Observation
+        bodyBuilt: editPatientForm.bodyBuilt,
+        gait: editPatientForm.gait,
+        attitudeOfLimb: editPatientForm.attitudeOfLimb,
+        posture: editPatientForm.posture,
+        // Local observation
+        skinTexture: editPatientForm.skinTexture,
+        skinColor: editPatientForm.skinColor,
+        atrophy: editPatientForm.atrophy,
+        swellingDeformity: editPatientForm.swellingDeformity,
+        // Palpation
+        tenderness: editPatientForm.tenderness,
+        temp: editPatientForm.temp,
+        warmth: editPatientForm.warmth,
+        edema: editPatientForm.edema,
+        crepitus: editPatientForm.crepitus,
+        scar: editPatientForm.scar,
+        muscleTightness: editPatientForm.muscleTightness,
+        // Examination
+        rom: editPatientForm.rom,
+        lld: editPatientForm.lld,
+        dermatomesAndMyotomes: editPatientForm.dermatomesAndMyotomes,
+        // Investigation, Special test, Diagnosis, Treatment
+        investigation: editPatientForm.investigation,
+        specialTest: editPatientForm.specialTest,
+        provisionalDiagnosis: editPatientForm.provisionalDiagnosis,
+        diagnosis: editPatientForm.diagnosis,
+        shortTermTreatment: editPatientForm.shortTermTreatment,
+        longTermTreatment: editPatientForm.longTermTreatment,
+        // Vitals
         vitals: editPatientForm.vitals,
       };
 
@@ -535,7 +760,7 @@ export default function DoctorDashboard() {
       toast.error('Please enter your password');
       return;
     }
-    
+
     setDeleting(true);
     try {
       if (passwordModalCallback) {
@@ -572,11 +797,11 @@ export default function DoctorDashboard() {
       patientName,
       async (password) => {
         const response = await deletePatient(patientId, password);
-        if (response.success) {
-          toast.success('Patient deleted successfully!');
-          await loadPatients(); // Refresh the list
-        }
+      if (response.success) {
+        toast.success('Patient deleted successfully!');
+        await loadPatients(); // Refresh the list
       }
+    }
     );
   };
 
@@ -1209,70 +1434,63 @@ export default function DoctorDashboard() {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleAddPatient} className="p-4 sm:p-6 space-y-4">
+            <form onSubmit={handleAddPatient} className="p-4 sm:p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+              {/* Authentication Details */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Authentication Details <span className="text-red-500">*</span></h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input
-                    type="text"
+                      type="email"
                     required
-                    value={patientForm.name}
-                    onChange={(e) => setPatientForm({ ...patientForm, name: e.target.value })}
+                      value={patientForm.email}
+                      onChange={(e) => setPatientForm({ ...patientForm, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
                   <input
-                    type="number"
+                      type="password"
                     required
-                    value={patientForm.age}
-                    onChange={(e) => setPatientForm({ ...patientForm, age: e.target.value })}
+                      value={patientForm.password}
+                      onChange={(e) => setPatientForm({ ...patientForm, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+                </div>
+              </div>
+
+              {/* Basic Details */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Basic Details</h4>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <input
+                        type="text"
+                    required
+                        value={patientForm.name}
+                        onChange={(e) => setPatientForm({ ...patientForm, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
                   <input
-                    type="email"
+                        type="number"
                     required
-                    value={patientForm.email}
-                    onChange={(e) => setPatientForm({ ...patientForm, email: e.target.value })}
+                        value={patientForm.age}
+                        onChange={(e) => setPatientForm({ ...patientForm, age: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-                  <input
-                    type="password"
-                    required
-                    value={patientForm.password}
-                    onChange={(e) => setPatientForm({ ...patientForm, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
                   <select
-                    required
-                    value={patientForm.bloodGroup}
-                    onChange={(e) => setPatientForm({ ...patientForm, bloodGroup: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                  >
-                    <option value="">Select blood group</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                  <select
+                        required
                     value={patientForm.gender}
                     onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
@@ -1283,6 +1501,26 @@ export default function DoctorDashboard() {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group *</label>
+                      <select
+                        required
+                        value={patientForm.bloodGroup}
+                        onChange={(e) => setPatientForm({ ...patientForm, bloodGroup: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      >
+                        <option value="">Select blood group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="unknown">Unknown</option>
+                      </select>
+                    </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                   <input
@@ -1292,6 +1530,15 @@ export default function DoctorDashboard() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                   />
                 </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date of Admission</label>
+                      <input
+                        type="date"
+                        value={patientForm.dateOfAdmission}
+                        onChange={(e) => setPatientForm({ ...patientForm, dateOfAdmission: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
@@ -1303,35 +1550,388 @@ export default function DoctorDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Medical History</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CC (Chief Complaint)</label>
                 <textarea
-                  value={patientForm.medicalHistory}
-                  onChange={(e) => setPatientForm({ ...patientForm, medicalHistory: e.target.value })}
+                      value={patientForm.cc}
+                      onChange={(e) => setPatientForm({ ...patientForm, cc: e.target.value })}
                   rows="2"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">History of Present Illness</label>
                 <textarea
-                  value={patientForm.allergies}
-                  onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })}
+                      value={patientForm.historyOfPresentIllness}
+                      onChange={(e) => setPatientForm({ ...patientForm, historyOfPresentIllness: e.target.value })}
+                      rows="3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* History */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">History</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Past</label>
+                    <textarea
+                      value={patientForm.past}
+                      onChange={(e) => setPatientForm({ ...patientForm, past: e.target.value })}
                   rows="2"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Current Medications</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Surgical</label>
                 <textarea
-                  value={patientForm.currentMedications}
-                  onChange={(e) => setPatientForm({ ...patientForm, currentMedications: e.target.value })}
+                      value={patientForm.surgical}
+                      onChange={(e) => setPatientForm({ ...patientForm, surgical: e.target.value })}
                   rows="2"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Medical</label>
+                    <textarea
+                      value={patientForm.medical}
+                      onChange={(e) => setPatientForm({ ...patientForm, medical: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
               </div>
               
-              {/* Vitals Section */}
-              <div className="col-span-2 border-t pt-4">
+              {/* Pain Assessment */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Pain Assessment</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Onset</label>
+                    <input
+                      type="text"
+                      value={patientForm.onset}
+                      onChange={(e) => setPatientForm({ ...patientForm, onset: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                    <input
+                      type="text"
+                      value={patientForm.duration}
+                      onChange={(e) => setPatientForm({ ...patientForm, duration: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type Behaviour</label>
+                    <input
+                      type="text"
+                      value={patientForm.typeBehaviour}
+                      onChange={(e) => setPatientForm({ ...patientForm, typeBehaviour: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A and R</label>
+                    <input
+                      type="text"
+                      value={patientForm.aAndR}
+                      onChange={(e) => setPatientForm({ ...patientForm, aAndR: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Intensity</label>
+                    <input
+                      type="text"
+                      value={patientForm.intensity}
+                      onChange={(e) => setPatientForm({ ...patientForm, intensity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Observation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Observation</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Body Built</label>
+                    <input
+                      type="text"
+                      value={patientForm.bodyBuilt}
+                      onChange={(e) => setPatientForm({ ...patientForm, bodyBuilt: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gait</label>
+                    <input
+                      type="text"
+                      value={patientForm.gait}
+                      onChange={(e) => setPatientForm({ ...patientForm, gait: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Attitude of Limb</label>
+                    <input
+                      type="text"
+                      value={patientForm.attitudeOfLimb}
+                      onChange={(e) => setPatientForm({ ...patientForm, attitudeOfLimb: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Posture</label>
+                    <input
+                      type="text"
+                      value={patientForm.posture}
+                      onChange={(e) => setPatientForm({ ...patientForm, posture: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Local Observation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Local Observation</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Skin Texture</label>
+                    <input
+                      type="text"
+                      value={patientForm.skinTexture}
+                      onChange={(e) => setPatientForm({ ...patientForm, skinTexture: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Skin Color</label>
+                    <input
+                      type="text"
+                      value={patientForm.skinColor}
+                      onChange={(e) => setPatientForm({ ...patientForm, skinColor: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Atrophy</label>
+                    <input
+                      type="text"
+                      value={patientForm.atrophy}
+                      onChange={(e) => setPatientForm({ ...patientForm, atrophy: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Swelling Deformity</label>
+                    <input
+                      type="text"
+                      value={patientForm.swellingDeformity}
+                      onChange={(e) => setPatientForm({ ...patientForm, swellingDeformity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Palpation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Palpation</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tenderness</label>
+                    <input
+                      type="text"
+                      value={patientForm.tenderness}
+                      onChange={(e) => setPatientForm({ ...patientForm, tenderness: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Temp</label>
+                    <input
+                      type="text"
+                      value={patientForm.temp}
+                      onChange={(e) => setPatientForm({ ...patientForm, temp: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Warmth</label>
+                    <input
+                      type="text"
+                      value={patientForm.warmth}
+                      onChange={(e) => setPatientForm({ ...patientForm, warmth: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Edema</label>
+                    <input
+                      type="text"
+                      value={patientForm.edema}
+                      onChange={(e) => setPatientForm({ ...patientForm, edema: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Crepitus</label>
+                    <input
+                      type="text"
+                      value={patientForm.crepitus}
+                      onChange={(e) => setPatientForm({ ...patientForm, crepitus: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Scar</label>
+                    <input
+                      type="text"
+                      value={patientForm.scar}
+                      onChange={(e) => setPatientForm({ ...patientForm, scar: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Muscle Tightness</label>
+                    <input
+                      type="text"
+                      value={patientForm.muscleTightness}
+                      onChange={(e) => setPatientForm({ ...patientForm, muscleTightness: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Examination */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Examination</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ROM</label>
+                    <input
+                      type="text"
+                      value={patientForm.rom}
+                      onChange={(e) => setPatientForm({ ...patientForm, rom: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">LLD</label>
+                    <input
+                      type="text"
+                      value={patientForm.lld}
+                      onChange={(e) => setPatientForm({ ...patientForm, lld: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Dermatomes and Myotomes</label>
+                    <textarea
+                      value={patientForm.dermatomesAndMyotomes}
+                      onChange={(e) => setPatientForm({ ...patientForm, dermatomesAndMyotomes: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Investigation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Investigation</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Investigation</label>
+                  <textarea
+                    value={patientForm.investigation}
+                    onChange={(e) => setPatientForm({ ...patientForm, investigation: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Special Test */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Special Test</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Special Test</label>
+                  <textarea
+                    value={patientForm.specialTest}
+                    onChange={(e) => setPatientForm({ ...patientForm, specialTest: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Provisional Diagnosis */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Provisional Diagnosis</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Provisional Diagnosis</label>
+                  <textarea
+                    value={patientForm.provisionalDiagnosis}
+                    onChange={(e) => setPatientForm({ ...patientForm, provisionalDiagnosis: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Diagnosis */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Diagnosis</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
+                  <textarea
+                    value={patientForm.diagnosis}
+                    onChange={(e) => setPatientForm({ ...patientForm, diagnosis: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Short Term Treatment */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Short Term Treatment</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Short Term Treatment</label>
+                  <textarea
+                    value={patientForm.shortTermTreatment}
+                    onChange={(e) => setPatientForm({ ...patientForm, shortTermTreatment: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Long Term Treatment */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Long Term Treatment</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Long Term Treatment</label>
+                  <textarea
+                    value={patientForm.longTermTreatment}
+                    onChange={(e) => setPatientForm({ ...patientForm, longTermTreatment: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Vitals */}
+              <div className="border-b pb-4">
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Vitals</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -1589,42 +2189,487 @@ export default function DoctorDashboard() {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleUpdatePatient} className="p-4 sm:p-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editPatientForm.name}
-                    onChange={(e) => setEditPatientForm({ ...editPatientForm, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                  />
+            <form onSubmit={handleUpdatePatient} className="p-4 sm:p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+              {/* Basic Details */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Basic Details</h4>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editPatientForm.name}
+                        onChange={(e) => setEditPatientForm({ ...editPatientForm, name: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
+                      <input
+                        type="number"
+                        required
+                        value={editPatientForm.age}
+                        onChange={(e) => setEditPatientForm({ ...editPatientForm, age: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                      <select
+                        required
+                        value={editPatientForm.gender}
+                        onChange={(e) => setEditPatientForm({ ...editPatientForm, gender: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      >
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group *</label>
+                      <select
+                        required
+                        value={editPatientForm.bloodGroup}
+                        onChange={(e) => setEditPatientForm({ ...editPatientForm, bloodGroup: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      >
+                        <option value="">Select blood group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="unknown">Unknown</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        value={editPatientForm.phone}
+                        onChange={(e) => setEditPatientForm({ ...editPatientForm, phone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date of Admission</label>
+                      <input
+                        type="date"
+                        value={editPatientForm.dateOfAdmission}
+                        onChange={(e) => setEditPatientForm({ ...editPatientForm, dateOfAdmission: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <textarea
+                      value={editPatientForm.address}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, address: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CC (Chief Complaint)</label>
+                    <textarea
+                      value={editPatientForm.cc}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, cc: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">History of Present Illness</label>
+                    <textarea
+                      value={editPatientForm.historyOfPresentIllness}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, historyOfPresentIllness: e.target.value })}
+                      rows="3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password (Leave blank to keep current)</label>
+                    <input
+                      type="password"
+                      value={editPatientForm.password}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, password: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      placeholder="Enter new password (optional)"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editPatientForm.age}
-                    onChange={(e) => setEditPatientForm({ ...editPatientForm, age: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                  />
+              </div>
+
+              {/* History */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">History</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Past</label>
+                    <textarea
+                      value={editPatientForm.past}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, past: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Surgical</label>
+                    <textarea
+                      value={editPatientForm.surgical}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, surgical: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Medical</label>
+                    <textarea
+                      value={editPatientForm.medical}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, medical: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password (Leave blank to keep current)</label>
-                  <input
-                    type="password"
-                    value={editPatientForm.password}
-                    onChange={(e) => setEditPatientForm({ ...editPatientForm, password: e.target.value })}
+              </div>
+
+              {/* Pain Assessment */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Pain Assessment</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Onset</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.onset}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, onset: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.duration}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, duration: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type Behaviour</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.typeBehaviour}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, typeBehaviour: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A and R</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.aAndR}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, aAndR: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Intensity</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.intensity}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, intensity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Observation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Observation</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Body Built</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.bodyBuilt}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, bodyBuilt: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gait</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.gait}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, gait: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Attitude of Limb</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.attitudeOfLimb}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, attitudeOfLimb: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Posture</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.posture}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, posture: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Local Observation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Local Observation</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Skin Texture</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.skinTexture}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, skinTexture: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Skin Color</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.skinColor}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, skinColor: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Atrophy</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.atrophy}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, atrophy: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Swelling Deformity</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.swellingDeformity}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, swellingDeformity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Palpation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Palpation</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tenderness</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.tenderness}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, tenderness: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Temp</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.temp}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, temp: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Warmth</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.warmth}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, warmth: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Edema</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.edema}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, edema: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Crepitus</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.crepitus}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, crepitus: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Scar</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.scar}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, scar: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Muscle Tightness</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.muscleTightness}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, muscleTightness: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Examination */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Examination</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ROM</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.rom}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, rom: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">LLD</label>
+                    <input
+                      type="text"
+                      value={editPatientForm.lld}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, lld: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Dermatomes and Myotomes</label>
+                    <textarea
+                      value={editPatientForm.dermatomesAndMyotomes}
+                      onChange={(e) => setEditPatientForm({ ...editPatientForm, dermatomesAndMyotomes: e.target.value })}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Investigation */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Investigation</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Investigation</label>
+                  <textarea
+                    value={editPatientForm.investigation}
+                    onChange={(e) => setEditPatientForm({ ...editPatientForm, investigation: e.target.value })}
+                    rows="3"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                    placeholder="Enter new password (optional)"
                   />
                 </div>
               </div>
-              
-              {/* Vitals Section */}
-              <div className="border-t pt-4">
+
+              {/* Special Test */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Special Test</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Special Test</label>
+                  <textarea
+                    value={editPatientForm.specialTest}
+                    onChange={(e) => setEditPatientForm({ ...editPatientForm, specialTest: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Provisional Diagnosis */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Provisional Diagnosis</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Provisional Diagnosis</label>
+                  <textarea
+                    value={editPatientForm.provisionalDiagnosis}
+                    onChange={(e) => setEditPatientForm({ ...editPatientForm, provisionalDiagnosis: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Diagnosis */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Diagnosis</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
+                  <textarea
+                    value={editPatientForm.diagnosis}
+                    onChange={(e) => setEditPatientForm({ ...editPatientForm, diagnosis: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Short Term Treatment */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Short Term Treatment</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Short Term Treatment</label>
+                  <textarea
+                    value={editPatientForm.shortTermTreatment}
+                    onChange={(e) => setEditPatientForm({ ...editPatientForm, shortTermTreatment: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Long Term Treatment */}
+              <div className="border-b pb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Long Term Treatment</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Long Term Treatment</label>
+                  <textarea
+                    value={editPatientForm.longTermTreatment}
+                    onChange={(e) => setEditPatientForm({ ...editPatientForm, longTermTreatment: e.target.value })}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Vitals */}
+              <div className="border-b pb-4">
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Vitals</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

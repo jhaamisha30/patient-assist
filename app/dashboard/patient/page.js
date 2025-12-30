@@ -269,62 +269,336 @@ export default function PatientDashboard() {
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">My Information</h2>
           </div>
-          <div className="px-4 sm:px-6 py-4">
+          <div className="px-4 sm:px-6 py-4 space-y-6">
             {patient ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <>
+                {/* Basic Details */}
                 <div>
-                  <p className="text-sm text-gray-500">Name</p>
-                  <p className="text-lg font-medium text-gray-900">{patient.name}</p>
+                  <h3 className="text-md font-semibold text-gray-800 mb-3">Basic Details</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="text-lg font-medium text-gray-900">{patient.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Age</p>
+                      <p className="text-lg font-medium text-gray-900">{patient.age}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Gender</p>
+                      <p className="text-lg font-medium text-gray-900">{patient.gender || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Blood Group</p>
+                      <p className="text-lg font-medium text-gray-900">{patient.bloodGroup || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="text-lg font-medium text-gray-900">{patient.email}</p>
+                    </div>
+                    {patient.phone && (
+                      <div>
+                        <p className="text-sm text-gray-500">Phone</p>
+                        <p className="text-lg font-medium text-gray-900">{patient.phone}</p>
+                      </div>
+                    )}
+                    {patient.dateOfAdmission && (
+                      <div>
+                        <p className="text-sm text-gray-500">Date of Admission</p>
+                        <p className="text-lg font-medium text-gray-900">{patient.dateOfAdmission}</p>
+                      </div>
+                    )}
+                    {patient.address && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-500">Address</p>
+                        <p className="text-lg font-medium text-gray-900">{patient.address}</p>
+                      </div>
+                    )}
+                    {patient.cc && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-500">CC (Chief Complaint)</p>
+                        <p className="text-lg font-medium text-gray-900">{patient.cc}</p>
+                      </div>
+                    )}
+                    {patient.historyOfPresentIllness && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-500">History of Present Illness</p>
+                        <p className="text-lg font-medium text-gray-900">{patient.historyOfPresentIllness}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Age</p>
-                  <p className="text-lg font-medium text-gray-900">{patient.age}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Blood Group</p>
-                  <p className="text-lg font-medium text-gray-900">{patient.bloodGroup || 'Not specified'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="text-lg font-medium text-gray-900">{patient.email}</p>
-                </div>
-                {patient.phone && (
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="text-lg font-medium text-gray-900">{patient.phone}</p>
+
+                {/* History */}
+                {(patient.past || patient.surgical || patient.medical) && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">History</h3>
+                    <div className="space-y-3">
+                      {patient.past && (
+                        <div>
+                          <p className="text-sm text-gray-500">Past</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.past}</p>
+                        </div>
+                      )}
+                      {patient.surgical && (
+                        <div>
+                          <p className="text-sm text-gray-500">Surgical</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.surgical}</p>
+                        </div>
+                      )}
+                      {patient.medical && (
+                        <div>
+                          <p className="text-sm text-gray-500">Medical</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.medical}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {patient.gender && (
-                  <div>
-                    <p className="text-sm text-gray-500">Gender</p>
-                    <p className="text-lg font-medium text-gray-900">{patient.gender}</p>
+
+                {/* Pain Assessment */}
+                {(patient.onset || patient.duration || patient.typeBehaviour || patient.aAndR || patient.intensity) && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Pain Assessment</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {patient.onset && (
+                        <div>
+                          <p className="text-sm text-gray-500">Onset</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.onset}</p>
+                        </div>
+                      )}
+                      {patient.duration && (
+                        <div>
+                          <p className="text-sm text-gray-500">Duration</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.duration}</p>
+                        </div>
+                      )}
+                      {patient.typeBehaviour && (
+                        <div>
+                          <p className="text-sm text-gray-500">Type Behaviour</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.typeBehaviour}</p>
+                        </div>
+                      )}
+                      {patient.aAndR && (
+                        <div>
+                          <p className="text-sm text-gray-500">A and R</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.aAndR}</p>
+                        </div>
+                      )}
+                      {patient.intensity && (
+                        <div>
+                          <p className="text-sm text-gray-500">Intensity</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.intensity}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {patient.address && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-500">Address</p>
-                    <p className="text-lg font-medium text-gray-900">{patient.address}</p>
+
+                {/* Observation */}
+                {(patient.bodyBuilt || patient.gait || patient.attitudeOfLimb || patient.posture) && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Observation</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {patient.bodyBuilt && (
+                        <div>
+                          <p className="text-sm text-gray-500">Body Built</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.bodyBuilt}</p>
+                        </div>
+                      )}
+                      {patient.gait && (
+                        <div>
+                          <p className="text-sm text-gray-500">Gait</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.gait}</p>
+                        </div>
+                      )}
+                      {patient.attitudeOfLimb && (
+                        <div>
+                          <p className="text-sm text-gray-500">Attitude of Limb</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.attitudeOfLimb}</p>
+                        </div>
+                      )}
+                      {patient.posture && (
+                        <div>
+                          <p className="text-sm text-gray-500">Posture</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.posture}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {patient.medicalHistory && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-500">Medical History</p>
-                    <p className="text-lg font-medium text-gray-900">{patient.medicalHistory}</p>
+
+                {/* Local Observation */}
+                {(patient.skinTexture || patient.skinColor || patient.atrophy || patient.swellingDeformity) && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Local Observation</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {patient.skinTexture && (
+                        <div>
+                          <p className="text-sm text-gray-500">Skin Texture</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.skinTexture}</p>
+                        </div>
+                      )}
+                      {patient.skinColor && (
+                        <div>
+                          <p className="text-sm text-gray-500">Skin Color</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.skinColor}</p>
+                        </div>
+                      )}
+                      {patient.atrophy && (
+                        <div>
+                          <p className="text-sm text-gray-500">Atrophy</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.atrophy}</p>
+                        </div>
+                      )}
+                      {patient.swellingDeformity && (
+                        <div>
+                          <p className="text-sm text-gray-500">Swelling Deformity</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.swellingDeformity}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {patient.allergies && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-500">Allergies</p>
-                    <p className="text-lg font-medium text-gray-900">{patient.allergies}</p>
+
+                {/* Palpation */}
+                {(patient.tenderness || patient.temp || patient.warmth || patient.edema || patient.crepitus || patient.scar || patient.muscleTightness) && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Palpation</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {patient.tenderness && (
+                        <div>
+                          <p className="text-sm text-gray-500">Tenderness</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.tenderness}</p>
+                        </div>
+                      )}
+                      {patient.temp && (
+                        <div>
+                          <p className="text-sm text-gray-500">Temp</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.temp}</p>
+                        </div>
+                      )}
+                      {patient.warmth && (
+                        <div>
+                          <p className="text-sm text-gray-500">Warmth</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.warmth}</p>
+                        </div>
+                      )}
+                      {patient.edema && (
+                        <div>
+                          <p className="text-sm text-gray-500">Edema</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.edema}</p>
+                        </div>
+                      )}
+                      {patient.crepitus && (
+                        <div>
+                          <p className="text-sm text-gray-500">Crepitus</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.crepitus}</p>
+                        </div>
+                      )}
+                      {patient.scar && (
+                        <div>
+                          <p className="text-sm text-gray-500">Scar</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.scar}</p>
+                        </div>
+                      )}
+                      {patient.muscleTightness && (
+                        <div>
+                          <p className="text-sm text-gray-500">Muscle Tightness</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.muscleTightness}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {patient.currentMedications && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-500">Current Medications</p>
-                    <p className="text-lg font-medium text-gray-900">{patient.currentMedications}</p>
+
+                {/* Examination */}
+                {(patient.rom || patient.lld || patient.dermatomesAndMyotomes) && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Examination</h3>
+                    <div className="space-y-3">
+                      {patient.rom && (
+                        <div>
+                          <p className="text-sm text-gray-500">ROM</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.rom}</p>
+                        </div>
+                      )}
+                      {patient.lld && (
+                        <div>
+                          <p className="text-sm text-gray-500">LLD</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.lld}</p>
+                        </div>
+                      )}
+                      {patient.dermatomesAndMyotomes && (
+                        <div>
+                          <p className="text-sm text-gray-500">Dermatomes and Myotomes</p>
+                          <p className="text-lg font-medium text-gray-900">{patient.dermatomesAndMyotomes}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
+
+                {/* Investigation */}
+                {patient.investigation && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Investigation</h3>
+                    <div>
+                      <p className="text-lg font-medium text-gray-900 whitespace-pre-wrap">{patient.investigation}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Special Test */}
+                {patient.specialTest && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Special Test</h3>
+                    <div>
+                      <p className="text-lg font-medium text-gray-900 whitespace-pre-wrap">{patient.specialTest}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Provisional Diagnosis */}
+                {patient.provisionalDiagnosis && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Provisional Diagnosis</h3>
+                    <div>
+                      <p className="text-lg font-medium text-gray-900 whitespace-pre-wrap">{patient.provisionalDiagnosis}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Diagnosis */}
+                {patient.diagnosis && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Diagnosis</h3>
+                    <div>
+                      <p className="text-lg font-medium text-gray-900 whitespace-pre-wrap">{patient.diagnosis}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Short Term Treatment */}
+                {patient.shortTermTreatment && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Short Term Treatment</h3>
+                    <div>
+                      <p className="text-lg font-medium text-gray-900 whitespace-pre-wrap">{patient.shortTermTreatment}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Long Term Treatment */}
+                {patient.longTermTreatment && (
+                  <div className="border-t pt-4">
+                    <h3 className="text-md font-semibold text-gray-800 mb-3">Long Term Treatment</h3>
+                    <div>
+                      <p className="text-lg font-medium text-gray-900 whitespace-pre-wrap">{patient.longTermTreatment}</p>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <p className="text-gray-500">Patient information not available</p>
             )}

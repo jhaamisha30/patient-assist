@@ -8,7 +8,25 @@ import crypto from 'crypto';
 
 export async function POST(request) {
   try {
-    const { email, password, name, role, profilePic, doctorId, age, vitals, bloodGroup } = await request.json();
+    const { 
+      email, password, name, role, profilePic, doctorId, age, vitals, bloodGroup,
+      // Basic details
+      gender, address, dateOfAdmission, cc, historyOfPresentIllness, phone,
+      // History
+      past, surgical, medical,
+      // Pain assessment
+      onset, duration, typeBehaviour, aAndR, intensity,
+      // Observation
+      bodyBuilt, gait, attitudeOfLimb, posture,
+      // Local observation
+      skinTexture, skinColor, atrophy, swellingDeformity,
+      // Palpation
+      tenderness, temp, warmth, edema, crepitus, scar, muscleTightness,
+      // Examination
+      rom, lld, dermatomesAndMyotomes,
+      // Investigation, Special test, Diagnosis, Treatment
+      investigation, specialTest, provisionalDiagnosis, diagnosis, shortTermTreatment, longTermTreatment
+    } = await request.json();
 
     if (!email || !password || !name || !role) {
       return NextResponse.json(
@@ -25,9 +43,9 @@ export async function POST(request) {
       );
     }
 
-    // Validate blood group format
+    // Validate blood group format (including 'unknown')
     if (role === 'patient' && bloodGroup) {
-      const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+      const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown'];
       if (!validBloodGroups.includes(bloodGroup)) {
         return NextResponse.json(
           { error: 'Invalid blood group' },
@@ -226,9 +244,53 @@ export async function POST(request) {
         age: age ? parseInt(age) : 0,
         email,
         bloodGroup: bloodGroup || '',
-        gender: '',
-        phone: '',
-        address: '',
+        // Basic details
+        gender: gender || '',
+        address: address || '',
+        dateOfAdmission: dateOfAdmission || '',
+        cc: cc || '',
+        historyOfPresentIllness: historyOfPresentIllness || '',
+        phone: phone || '',
+        // History
+        past: past || '',
+        surgical: surgical || '',
+        medical: medical || '',
+        // Pain assessment
+        onset: onset || '',
+        duration: duration || '',
+        typeBehaviour: typeBehaviour || '',
+        aAndR: aAndR || '',
+        intensity: intensity || '',
+        // Observation
+        bodyBuilt: bodyBuilt || '',
+        gait: gait || '',
+        attitudeOfLimb: attitudeOfLimb || '',
+        posture: posture || '',
+        // Local observation
+        skinTexture: skinTexture || '',
+        skinColor: skinColor || '',
+        atrophy: atrophy || '',
+        swellingDeformity: swellingDeformity || '',
+        // Palpation
+        tenderness: tenderness || '',
+        temp: temp || '',
+        warmth: warmth || '',
+        edema: edema || '',
+        crepitus: crepitus || '',
+        scar: scar || '',
+        muscleTightness: muscleTightness || '',
+        // Examination
+        rom: rom || '',
+        lld: lld || '',
+        dermatomesAndMyotomes: dermatomesAndMyotomes || '',
+        // Investigation, Special test, Diagnosis, Treatment
+        investigation: investigation || '',
+        specialTest: specialTest || '',
+        provisionalDiagnosis: provisionalDiagnosis || '',
+        diagnosis: diagnosis || '',
+        shortTermTreatment: shortTermTreatment || '',
+        longTermTreatment: longTermTreatment || '',
+        // Legacy fields (keep for backward compatibility)
         medicalHistory: '',
         allergies: '',
         currentMedications: '',
